@@ -7,7 +7,6 @@
 //'>> June 6 - 27' (currently this requires 'June 6 - June 27'
 //'>> May 4-25, August 10-31
 
-
 function to24Hours(hours, period) {
 	if (period == 'AM' && hours == 12) {
 		hours = 0;

@@ -9,7 +9,6 @@ MONDAY
 English Second Language  | Room 125
 Students receive weekly training in conversational English. Bible stories will be shared and free childcare provided for children (birth through 6th grade) while parents attend class. Hosted by Begin Anew. 
 >> January 8 - May 14; contact Sandra at (615) 630-0077
-
 */
 
 function ChooseSettingsFile() {

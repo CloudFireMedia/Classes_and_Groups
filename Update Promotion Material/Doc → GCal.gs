@@ -52,14 +52,15 @@ function ExportEvents(settings) {
 function GetExclusionDays(url) {
 	var ss = SpreadsheetApp.openByUrl(url),
 		sheet = ss.getSheetByName('Holidays + Blackout Dates'),
-		ranges = sheet.getRangeList(['A4:', 'D4:']).getRanges(),
+		ranges = sheet.getRangeList(['A4:A', 'D4:D']).getRanges(),
 		titles = ranges[0].getValues(),
 		values = ranges[1].getValues();
 
 	for (var i = 0; i < values.length; i++) {
-		var val = String(values[i][0]).toLowerCase().trim();
+		var title = String(titles[i][0]).trim(),
+			value = String(values[i][0]).toLowerCase().trim();
 
-		switch (val) {
+		switch (value) {
 			case 'yes': {
 				//
 

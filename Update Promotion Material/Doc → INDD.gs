@@ -1,15 +1,5 @@
 // created by Mikhail K. on freelancer.com
-// redevelopment notes: should recognize 'Rm' as 'Room' as in 'Rm 240 (Wallace Chapel)'
 // redevelopment notes: should download .json file to desktop rather than Drive home folder
-
-/* redevelopment note: this event is erroneously listed as 10pm on the signage for some reason??
-
-MONDAY
-10:00am – 12:00pm
-English Second Language  | Room 125
-Students receive weekly training in conversational English. Bible stories will be shared and free childcare provided for children (birth through 6th grade) while parents attend class. Hosted by Begin Anew. 
->> January 8 - May 14; contact Sandra at (615) 630-0077
-*/
 
 function ChooseSettingsFile() {
 	var app = DocumentApp,

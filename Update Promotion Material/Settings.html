@@ -1,0 +1,173 @@
+<!doctype html>
+<html>
+<head>
+	<link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
+	<style type="text/css">
+		body {
+			font-family: Arial, Helvetica, sans-serif;
+			margin: 0;
+			padding: 0;
+		}
+
+		* {
+			outline: none;
+		}
+
+		fieldset {
+			border: 1px solid #c5c5c5;
+			border-radius: 3px;
+			margin: 0 0 15px;
+			padding: 10px 10px 0;
+		}
+
+		legend {
+			font-weight: bold;
+		}
+
+		.row {
+			margin: 0 0 10px;
+		}
+
+		label {
+			display: inline-block;
+			text-align: right;
+			width: 190px;
+			padding-right: 10px;
+		}
+
+		.ui-textfield {
+			background: #fff;
+			color: #454545;
+			border: 1px solid #c5c5c5;
+			border-radius: 3px;
+			width: 260px;
+			margin: 0;
+			padding: .4em;
+			cursor: text;
+		}
+
+		.ui-checkboxradio-label {
+			width: 105px;
+			text-align: left;
+		}
+
+		#export-btn {
+			border: 1px solid #c5c5c5;
+			width: 100%;
+			margin: 0;
+			padding: 10px 0;
+		}
+	</style>
+</head>
+<body>
+	<form id="settings">
+		<fieldset>
+			<legend>Name of the Google Calendar</legend>
+			<div class="row">
+				<label for="regular_events_calendar">Old Classes & Groups</label>
+				<select id="regular_events_calendar" name="regular_events_calendar">
+					<? for (var index in content.calendars) { ?>
+					<option><?= content.calendars[index] ?></option>
+					<? } ?>
+				</select>
+			</div>
+			<div class="row">
+				<label for="new_events_calendar">New Classes & Groups</label>
+				<select id="new_events_calendar" name="new_events_calendar">
+					<? for (var index in content.calendars) { ?>
+					<option><?= content.calendars[index] ?></option>
+					<? } ?>
+				</select>
+			</div>
+		</fieldset>
+		<fieldset>
+			<legend>Holidays & Blackout Dates</legend>
+			<div class="row">
+				<label for="exclude_dates_ss_url">Google Spreadsheet URL</label>
+				<input id="exclude_dates_ss_url" name="exclude_dates_ss_url" class="ui-widget ui-textfield" type="text" placeholder="https://..." value=""/>
+			</div>
+		</fieldset>
+		<fieldset>
+			<legend>Days-of-week to populate events</legend>
+			<div class="row">
+				<label for="monday">Monday</label>
+				<input id="monday" name="populate_days[]" type="checkbox" value="monday" checked="checked"/>
+			</div>
+			<div class="row">
+				<label for="tuesday">Tuesday</label>
+				<input id="tuesday" name="populate_days[]" type="checkbox" value="tuesday" checked="checked"/>
+			</div>
+			<div class="row">
+				<label for="wednesday">Wednesday</label>
+				<input id="wednesday" name="populate_days[]" type="checkbox" value="wednesday" checked="checked"/>
+			</div>
+			<div class="row">
+				<label for="thursday">Thursday</label>
+				<input id="thursday" name="populate_days[]" type="checkbox" value="thursday" checked="checked"/>
+			</div>
+			<div class="row">
+				<label for="friday">Friday</label>
+				<input id="friday" name="populate_days[]" type="checkbox" value="friday" checked="checked"/>
+			</div>
+			<div class="row">
+				<label for="saturday">Saturday</label>
+				<input id="saturday" name="populate_days[]" type="checkbox" value="saturday" checked="checked"/>
+			</div>
+			<div class="row">
+				<label for="sunday">Sunday</label>
+				<input id="sunday" name="populate_days[]" type="checkbox" value="sunday" checked="checked"/>
+			</div>
+		</fieldset>
+
+		<button id="export-btn">Export</button>
+	</form>
+
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js" type="text/javascript"></script>
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" type="text/javascript"></script>
+	<script type="text/javascript">
+		$(function() {
+			$('select').selectmenu();
+			$('input[type="checkbox"]').checkboxradio();
+			$('#export-btn').button();
+
+			$('#export-btn').on('click', function(e) {
+				e.preventDefault();
+
+				var settings = $('#settings').serializeArray(),
+					values = {};
+
+				$.each(settings, function(i, param) {
+					if (param.name.lastIndexOf('[]') == (param.name.length - 2)) {
+						var arr_name = param.name.substr(0, param.name.length - 2);
+						
+						if (values[arr_name] == null) {
+							values[arr_name] = [];
+						}
+
+						values[arr_name].push(String(param.value).trim());
+					} else {
+						values[param.name] = String(param.value).trim();
+					}
+				});
+
+				google.script.run
+					.withFailureHandler(onParseFailure)
+					.withSuccessHandler(onParseSuccess)
+					.ExportEvents(values);
+			});
+
+			$('#settings').on('submit', function(e) {
+				e.preventDefault();
+			});
+
+			function onParseSuccess() {
+				google.script.host.close();
+			}
+
+			function onParseFailure(e) {
+				//
+			}
+		});
+	</script>
+</body>
+</html>

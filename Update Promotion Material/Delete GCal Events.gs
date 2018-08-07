@@ -6,8 +6,32 @@
 // In order to optimize it, probably a way would be to use direct the calendar API.
 // Without testing and without access to calendars I can't do that.
 
-function DeleteEvents() {
+function ShowDeletePopup() {
+	var ui = DocumentApp.getUi(),
+		tmpl = HtmlService.createTemplateFromFile('Delete.html'),
+		all_calendars = CalendarApp.getAllCalendars(),
+		calendars = [];
+
+	for (var index in all_calendars) {
+		var calendar = all_calendars[index];
+
+		calendars.push(calendar.getName());
+	}
+
+	tmpl.content = {
+		'calendars': calendars
+	};
+
+	var html = tmpl.evaluate()
+				   .setWidth(520)
+				   .setHeight(640);
+
+	ui.showModalDialog(html, 'Delete settings');
+}
+
+function DeleteEvents(calendar_name) {
 	var doc = DocumentApp.getActiveDocument(),
+		calendars = CalendarApp.getCalendarsByName(calendar_name),
 		title = doc.getName(),
 		year = 1970,
 		month = 0,
@@ -20,25 +44,20 @@ function DeleteEvents() {
 		day = parseInt(res[3], 10);
 	}
 
-	var calendars = CalendarApp.getAllCalendars(),
-		start = new Date(year, month, day, 0, 0, 0),
+	var start = new Date(year, month, day, 0, 0, 0),
 		end = new Date(2070, 0, 31, 0, 0, 0);
 
 	for (var index in calendars) {
-		var calendar = calendars[index];
+		var calendar = calendars[index],
+			events = calendar.getEvents(start, end);
 
-		switch (calendar.getName()) {
-			case 'CCN Classes and Groups':
-			case 'CCN NEW! Events': {
-				var events = calendar.getEvents(start, end);
+		for (var i = 0; i < events.length; i++) {
+			var event = events[i];
 
-				for (var i = 0; i < events.length; i++) {
-					var event = events[i];
-
-					event.deleteEvent();
-				}
-
-				break;
+			if (event.isRecurringEvent()) {
+				event.getEventSeries().deleteEventSeries();
+			} else {
+				event.deleteEvent();
 			}
 		}
 	}

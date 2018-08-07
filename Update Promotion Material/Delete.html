@@ -1,0 +1,126 @@
+<!doctype html>
+<html>
+<head>
+	<link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
+	<style type="text/css">
+		body {
+			font-family: Arial, Helvetica, sans-serif;
+			margin: 0;
+			padding: 0;
+		}
+
+		* {
+			outline: none;
+		}
+
+		fieldset {
+			border: 1px solid #c5c5c5;
+			border-radius: 3px;
+			margin: 0 0 15px;
+			padding: 10px 10px 0;
+		}
+
+		legend {
+			font-weight: bold;
+		}
+
+		.row {
+			margin: 0 0 10px;
+		}
+
+		label {
+			display: inline-block;
+			text-align: right;
+			width: 190px;
+			padding-right: 10px;
+		}
+
+		.ui-textfield {
+			background: #fff;
+			color: #454545;
+			border: 1px solid #c5c5c5;
+			border-radius: 3px;
+			width: 260px;
+			margin: 0;
+			padding: .4em;
+			cursor: text;
+		}
+
+		.ui-checkboxradio-label {
+			width: 105px;
+			text-align: left;
+		}
+
+		#export-btn {
+			border: 1px solid #c5c5c5;
+			width: 100%;
+			margin: 0;
+			padding: 10px 0;
+		}
+	</style>
+</head>
+<body>
+	<form id="settings">
+		<fieldset>
+			<legend>Name of the Google Calendar</legend>
+			<div class="row">
+				<label for="calendar_name">Old Classes & Groups</label>
+				<select id="calendar_name" name="calendar_name">
+					<? for (var index in content.calendars) { ?>
+					<option><?= content.calendars[index] ?></option>
+					<? } ?>
+				</select>
+			</div>
+		</fieldset>
+
+		<button id="delete-btn">Delete</button>
+	</form>
+
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js" type="text/javascript"></script>
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" type="text/javascript"></script>
+	<script type="text/javascript">
+		$(function() {
+			$('select').selectmenu();
+			$('#delete-btn').button();
+
+			$('#delete-btn').on('click', function(e) {
+				e.preventDefault();
+
+				var settings = $('#settings').serializeArray(),
+					values = {};
+
+				$.each(settings, function(i, param) {
+					if (param.name.lastIndexOf('[]') == (param.name.length - 2)) {
+						var arr_name = param.name.substr(0, param.name.length - 2);
+						
+						if (values[arr_name] == null) {
+							values[arr_name] = [];
+						}
+
+						values[arr_name].push(String(param.value).trim());
+					} else {
+						values[param.name] = String(param.value).trim();
+					}
+				});
+
+				google.script.run
+					.withFailureHandler(onParseFailure)
+					.withSuccessHandler(onParseSuccess)
+					.DeleteEvents(values['calendar_name']);
+			});
+
+			$('#settings').on('submit', function(e) {
+				e.preventDefault();
+			});
+
+			function onParseSuccess() {
+				google.script.host.close();
+			}
+
+			function onParseFailure(e) {
+				//
+			}
+		});
+	</script>
+</body>
+</html>

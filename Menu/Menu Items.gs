@@ -7,8 +7,8 @@ function onOpen(e) {
 		.addSeparator()
 		.addSubMenu(
 			ui.createMenu('Update Promotion Material')
-				.addItem('Delete Future Calendar Events', 'DeleteEvents')
-				.addItem('Push Events to Google Calendar', 'ParseEvents')
+				.addItem('Delete Future Calendar Events', 'ShowDeletePopup')
+				.addItem('Push Events to Google Calendar', 'ShowExportPopup')
 				.addItem('Download .json for INDD Classrooms Signage', 'ChooseSettingsFile')
 		)
 		.addToUi();

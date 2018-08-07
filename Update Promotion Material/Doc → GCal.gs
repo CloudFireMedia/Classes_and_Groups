@@ -17,9 +17,9 @@ function to24Hours(hours, period) {
 	return hours;
 }
 
-function ShowSettingsPopup() {
+function ShowExportPopup() {
 	var ui = DocumentApp.getUi(),
-		tmpl = HtmlService.createTemplateFromFile('Settings.html'),
+		tmpl = HtmlService.createTemplateFromFile('Export.html'),
 		all_calendars = CalendarApp.getAllCalendars(),
 		calendars = [];
 
@@ -37,7 +37,7 @@ function ShowSettingsPopup() {
 				   .setWidth(520)
 				   .setHeight(640);
 
-	ui.showModalDialog(html, 'Settings');
+	ui.showModalDialog(html, 'Export settings');
 }
 
 function ExportEvents(settings) {

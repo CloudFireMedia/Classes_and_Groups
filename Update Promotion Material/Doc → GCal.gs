@@ -41,12 +41,12 @@ function ShowSettingsPopup() {
 }
 
 function ExportEvents(settings) {
-	var regularEventsCalendar = CalendarApp.getCalendarsByName(settings.regular_events_calendar),
-		newEventsCalendar = CalendarApp.getCalendarsByName(settings.new_events_calendar),
+	var regularEventsCalendars = CalendarApp.getCalendarsByName(settings.regular_events_calendar),
+		newEventsCalendars = CalendarApp.getCalendarsByName(settings.new_events_calendar),
 		events = ParseEvents(settings.populate_days),
 		exclusion_days = GetExclusionDays(settings.exclude_dates_ss_url);
 
-	AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, exclusion_days, events);
+	AddEventsToCalendar(regularEventsCalendars[0], newEventsCalendars[0], exclusion_days, events);
 }
 
 function GetExclusionDays(url) {

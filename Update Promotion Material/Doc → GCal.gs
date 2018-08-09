@@ -44,37 +44,59 @@ function ExportEvents(settings) {
 	var regularEventsCalendars = CalendarApp.getCalendarsByName(settings.regular_events_calendar),
 		newEventsCalendars = CalendarApp.getCalendarsByName(settings.new_events_calendar),
 		events = ParseEvents(settings.populate_days),
-		exclusion_days = GetExclusionDays(settings.exclude_dates_ss_url);
+		exclusion_dates = GetExclusionDates(settings.exclude_dates_ss_url);
 
-	AddEventsToCalendar(regularEventsCalendars[0], newEventsCalendars[0], exclusion_days, events);
+	AddEventsToCalendar(regularEventsCalendars[0], newEventsCalendars[0], exclusion_dates, events);
 }
 
-function GetExclusionDays(url) {
-	var ss = SpreadsheetApp.openByUrl(url),
-		sheet = ss.getSheetByName('Holidays + Blackout Dates'),
-		ranges = sheet.getRangeList(['A4:A', 'D4:D']).getRanges(),
+function GetExclusionDates(url) {
+	var url = 'https://docs.google.com/spreadsheets/d/1d0-hBf96ilIpAO67LR86leEq09jYP2866uWC48bJloc/edit',
+		ss = SpreadsheetApp.openByUrl(url),
+		sheet = ss.getSheetByName('Calendars Blackout Dates'),
+		ranges = sheet.getRangeList(['A5:A', 'D5:D', 'H5:S']).getRanges(),
 		titles = ranges[0].getValues(),
-		values = ranges[1].getValues();
+		values = ranges[1].getValues(),
+		periods = ranges[2].getValues(),
+		dates = [];
 
-	for (var i = 0; i < values.length; i++) {
+	for (var i = 0; i < titles.length; i++) {
 		var title = String(titles[i][0]).trim(),
 			value = String(values[i][0]).toLowerCase().trim();
 
-		switch (value) {
-			case 'yes': {
-				//
+		if (value == 'yes') {
+			var start, end;
 
-				break;
-			}
-			case 'no': {
-				//
+			for (var col = 0; col < periods[i].length; col++) {
+				var date = periods[i][col];
 
-				break;
+				if (date != '') {
+					if ((col + 1) % 2 != 0) {
+						start = date;
+					} else {
+						end = date;
+
+						if (start < end) {
+							var startTS = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate()),
+								endTS = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate()),
+								days = Math.floor((endTS - startTS) / (1000*60*60*24));
+
+							for (var j = 0; j <= days; j++) {
+								var tmpDate = new Date(start);
+
+								tmpDate.setDate(tmpDate.getDate() + j);
+
+								dates.push(tmpDate);
+							}
+						} else {
+							dates.push(start);
+						}
+					}
+				}
 			}
 		}
 	}
 
-	return [];
+	return dates;
 }
 
 function ParseEvents(populate_days) {
@@ -342,7 +364,7 @@ function ParseEvents(populate_days) {
 	return data;
 }
 
-function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, exclusion_days, data) {
+function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, exclusion_dates, data) {
 	for (var index in data) {
 		var event = data[index],
 			calendar = event.title.toUpperCase().indexOf('NEW!') < 0 ? regularEventsCalendar : newEventsCalendar,
@@ -355,8 +377,8 @@ function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, exclusion
 			case 'WEEKLY': {
 				var recurrence = CalendarApp.newRecurrence().addWeeklyRule();
 
-				if (exclusion_days.length > 0) {
-					recurrence = recurrence.addYearlyExclusion().onlyOnYearDay(exclusion_days);
+				for (var i = 0; i < exclusion_dates.length; i++) {
+					recurrence = recurrence.addDateExclusion(exclusion_dates[i]);
 				}
 
 				if (event.dates['finish'] != null) {

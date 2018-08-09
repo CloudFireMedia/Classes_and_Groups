@@ -24,7 +24,7 @@ function ShowDeletePopup() {
 
 	var html = tmpl.evaluate()
 				   .setWidth(520)
-				   .setHeight(640);
+				   .setHeight(140);
 
 	ui.showModalDialog(html, 'Delete settings');
 }

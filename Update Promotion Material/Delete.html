@@ -64,7 +64,7 @@
 		<fieldset>
 			<legend>Choose Google Calendar</legend>
 			<div class="row">
-				<label for="calendar_name">Name of the Google Calendar</label>
+				<label for="calendar_name">Name of the Calendar</label>
 				<select id="calendar_name" name="calendar_name">
 					<? for (var index in content.calendars) { ?>
 					<option><?= content.calendars[index] ?></option>
@@ -104,8 +104,8 @@
 				});
 
 				google.script.run
-					.withFailureHandler(onParseFailure)
-					.withSuccessHandler(onParseSuccess)
+					.withFailureHandler(onDeleteFailure)
+					.withSuccessHandler(onDeleteSuccess)
 					.DeleteEvents(values['calendar_name']);
 			});
 
@@ -113,11 +113,11 @@
 				e.preventDefault();
 			});
 
-			function onParseSuccess() {
+			function onDeleteSuccess() {
 				google.script.host.close();
 			}
 
-			function onParseFailure(e) {
+			function onDeleteFailure(e) {
 				//
 			}
 		});

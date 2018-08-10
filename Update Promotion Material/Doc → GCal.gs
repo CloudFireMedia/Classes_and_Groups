@@ -19,7 +19,7 @@ function to24Hours(hours, period) {
 
 function ShowExportPopup() {
 	var ui = DocumentApp.getUi(),
-		tmpl = HtmlService.createTemplateFromFile('Export.html'),
+		tmpl = HtmlService.createTemplateFromFile('Update Promotion Material/Export.html'),
 		all_calendars = CalendarApp.getAllCalendars(),
 		calendars = [];
 

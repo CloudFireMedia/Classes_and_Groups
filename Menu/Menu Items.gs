@@ -1,5 +1,5 @@
 function onOpen(e) {
-	var ui = SpreadsheetApp.getUi();
+	var ui = DocumentApp.getUi();
 
 	ui.createMenu('Automation')
 		.addItem('Read Instructions', 'instructionsDialogueBox') 

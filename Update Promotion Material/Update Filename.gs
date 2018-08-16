@@ -1,6 +1,5 @@
 function SetTrigger() {
 	var doc = DocumentApp.getActiveDocument(),
-		calendars = CalendarApp.getCalendarsByName(calendar_name),
 		title = doc.getName(),
 		res = title.match(/\[\s*(\d+)\.(\d+)\.(\d+)\s*\]/);
 

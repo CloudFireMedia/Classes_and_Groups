@@ -6,7 +6,7 @@ function SetTrigger() {
 
 	if (res.length == 4) {
 		var year = parseInt(res[1], 10),
-			month = parseInt(res[2], 10) - 1,
+			month = parseInt(res[2], 10),
 			day = parseInt(res[3], 10);
 
 		AddTrigger(year, month, day);
@@ -41,7 +41,7 @@ function ChangeFilename() {
 
 			doc.setName('[ '+ year +'.'+ fullMonth +'.'+ fullDay +' ] Classes and Groups');
 
-			AddTrigger(year, (month - 1), day);
+			AddTrigger(year, month, day);
 		}
 	}
 }

@@ -48,16 +48,21 @@ function DeleteEvents(calendar_name) {
 		end = new Date(2070, 0, 31, 0, 0, 0);
 
 	for (var index in calendars) {
-		var calendar = calendars[index],
-			events = calendar.getEvents(start, end);
+		var calendar = calendars[index];
 
-		for (var i = 0; i < events.length; i++) {
-			var event = events[i];
+		while (true) {
+			var events = calendar.getEvents(start, end);
 
-			if (event.isRecurringEvent()) {
-				event.getEventSeries().deleteEventSeries();
+			if (events.length > 0) {
+				var event = events[0];
+
+				if (event.isRecurringEvent()) {
+					event.getEventSeries().deleteEventSeries();
+				} else {
+					event.deleteEvent();
+				}
 			} else {
-				event.deleteEvent();
+				break;
 			}
 		}
 	}

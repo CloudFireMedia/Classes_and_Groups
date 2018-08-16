@@ -45,25 +45,22 @@ function DeleteEvents(calendar_name) {
 	}
 
 	var start = new Date(year, month, day, 0, 0, 0),
-		end = new Date(2070, 0, 31, 0, 0, 0);
+		end = new Date((year + 1), month, day, 0, 0, 0);
 
-	for (var index in calendars) {
-		var calendar = calendars[index];
+	for (var i = 0; i < calendars.length; i++) {
+		var calendar = calendars[i],
+			events = calendar.getEvents(start, end);
 
-		while (true) {
-			var events = calendar.getEvents(start, end);
+		while (events.length > 0) {
+			var event = events[0];
 
-			if (events.length > 0) {
-				var event = events[0];
-
-				if (event.isRecurringEvent()) {
-					event.getEventSeries().deleteEventSeries();
-				} else {
-					event.deleteEvent();
-				}
+			if (event.isRecurringEvent()) {
+				event.getEventSeries().deleteEventSeries();
 			} else {
-				break;
+				event.deleteEvent();
 			}
+
+			events = calendar.getEvents(start, end);
 		}
 	}
 }

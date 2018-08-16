@@ -123,6 +123,15 @@ function ParseEvents(populate_days) {
 			'NOVEMBER',
 			'DECEMBER'
 		],
+		dayweek = [
+			'MONDAY',
+			'TUESDAY',
+			'WEDNESDAY',
+			'THURSDAY',
+			'FRIDAY',
+			'SATURDAY',
+			'SUNDAY'
+		],
 		data = [],
 		isOtherEvents = false,
 		day, timeFrame,
@@ -138,126 +147,130 @@ function ParseEvents(populate_days) {
 		}
 
 		if (!isOtherEvents) {
-			if (populate_days.indexOf(day) > -1) {
-				switch (heading) {
-					// day of the week
-					case DocumentApp.ParagraphHeading.HEADING1: {
-						if (day != null) {
-							docDate.setDate(docDate.getDate() + 1);
-						}
-
-						day = text.toLowerCase().trim();
-
-						break;
+			switch (heading) {
+				// day of the week
+				case DocumentApp.ParagraphHeading.HEADING1: {
+					if (day != null) {
+						docDate.setDate(docDate.getDate() + 1);
 					}
-					// time
-					case DocumentApp.ParagraphHeading.HEADING2: {
-						var time = text.toUpperCase().trim(),
-							founds = time.match(/^([0-9]{1,2})\:([0-9]{1,2})([AM|PM]{2})\s*[–\-]\s*([0-9]{1,2})\:([0-9]{1,2})([AM|PM]{2})$/);
 
-						if (founds != null) {
-							if (founds.length == 7) {
-								timeFrame = {
-									'start': {
-										'hours': to24Hours(Number(founds[1]), founds[3]),
-										'minutes': Number(founds[2])
-									},
-									'end': {
-										'hours': to24Hours(Number(founds[4]), founds[6]),
-										'minutes': Number(founds[5])
-									},
-								};
-							}
-						}
+					day = text.toLowerCase().trim();
 
-						break;
-					}
-					// title & location
-					case DocumentApp.ParagraphHeading.HEADING3: {
-						var header = text.split('|');
+					break;
+				}
+				// time
+				case DocumentApp.ParagraphHeading.HEADING2: {
+					var time = text.toUpperCase().trim(),
+						founds = time.match(/^([0-9]{1,2})\:([0-9]{1,2})([AM|PM]{2})\s*[–\-]\s*([0-9]{1,2})\:([0-9]{1,2})([AM|PM]{2})$/);
 
-						if (header.length > 1) {
-							switch (header.length) {
-								case 2: {
-									title = header[0].trim();
-									location = header[1].trim();
-
-									break;
-								}
-								case 3: {
-									title = header[0].trim();
-									location = header[2].trim();
-
-									break;
-								}
-							}
-						}
-
-						break;
-					}
-					// description
-					case DocumentApp.ParagraphHeading.HEADING4:
-					case DocumentApp.ParagraphHeading.HEADING5: {
-						var description = text.trim(),
-							pDate = paragraphs[i + 1],
-							curYear = docDate.getFullYear(),
-							curMonth = docDate.getMonth(),
-							curDay = docDate.getDate(),
-							dates = {
-								'start': new Date(curYear, curMonth, curDay, timeFrame.start.hours, timeFrame.start.minutes),
-								'end': new Date(curYear, curMonth, curDay, timeFrame.end.hours, timeFrame.end.minutes)
+					if (founds != null) {
+						if (founds.length == 7) {
+							timeFrame = {
+								'start': {
+									'hours': to24Hours(Number(founds[1]), founds[3]),
+									'minutes': Number(founds[2])
+								},
+								'end': {
+									'hours': to24Hours(Number(founds[4]), founds[6]),
+									'minutes': Number(founds[5])
+								},
 							};
+						}
+					}
 
-						if (pDate.getHeading() == DocumentApp.ParagraphHeading.HEADING6) {
-							var note = pDate.getText().toUpperCase().trim(),
-								founds;
+					break;
+				}
+				// title & location
+				case DocumentApp.ParagraphHeading.HEADING3: {
+					var header = text.split('|');
 
-							if (note.indexOf('>>') == 0) {
-								note = note.substring(3);
+					if (header.length > 1) {
+						switch (header.length) {
+							case 2: {
+								title = header[0].trim();
+								location = header[1].trim();
 
-								var founds = note.match(/^STARTS\s*(\w+)\s*([0-9]{1,2})/);
+								break;
+							}
+							case 3: {
+								title = header[0].trim();
+								location = header[2].trim();
 
-								if (founds != null) {
-									if (founds.length == 3) {
-										var month = months.indexOf(founds[1].toUpperCase()),
-											day = Number(founds[2]);
+								break;
+							}
+						}
+					}
 
-										dates = {
-											'start': new Date(curYear, month, day, timeFrame.start.hours, timeFrame.start.minutes),
-											'end': new Date(curYear, month, day, timeFrame.end.hours, timeFrame.end.minutes)
-										};
-									}
+					break;
+				}
+				// description
+				case DocumentApp.ParagraphHeading.HEADING4:
+				case DocumentApp.ParagraphHeading.HEADING5: {
+					var description = text.trim(),
+						pDate = paragraphs[i + 1],
+						curYear = docDate.getFullYear(),
+						curMonth = docDate.getMonth(),
+						curDay = docDate.getDate(),
+						dates = {
+							'start': new Date(curYear, curMonth, curDay, timeFrame.start.hours, timeFrame.start.minutes),
+							'end': new Date(curYear, curMonth, curDay, timeFrame.end.hours, timeFrame.end.minutes)
+						};
+
+					if (pDate.getHeading() == DocumentApp.ParagraphHeading.HEADING6) {
+						var note = pDate.getText().toUpperCase().trim(),
+							founds;
+
+						if (note.indexOf('>>') == 0) {
+							note = note.substring(3);
+
+							var founds = note.match(/^STARTS\s*(\w+)\s*([0-9]{1,2})/);
+
+							if (founds != null) {
+								if (founds.length == 3) {
+									var month = months.indexOf(founds[1].toUpperCase()),
+										day = Number(founds[2]);
+
+									dates = {
+										'start': new Date(curYear, month, day, timeFrame.start.hours, timeFrame.start.minutes),
+										'end': new Date(curYear, month, day, timeFrame.end.hours, timeFrame.end.minutes)
+									};
 								}
+							}
 
-								founds = note.match(/^(\w+)\s*([0-9]{1,2})\s*[–\-]\s*(\w+)\s*([0-9]{1,2})[.;]{0,1}/);
+							founds = note.match(/^(\w+)\s*([0-9]{1,2})\s*[–\-]\s*(\w+)\s*([0-9]{1,2})[.;]{0,1}/);
 
-								if (founds != null) {
-									if (founds.length == 5) {
-										var startMonth = months.indexOf(founds[1].toUpperCase()),
-											startDay = Number(founds[2]),
-											endMonth = months.indexOf(founds[3].toUpperCase()),
-											endDay = Number(founds[4]);
+							if (founds != null) {
+								if (founds.length == 5) {
+									var startMonth = months.indexOf(founds[1].toUpperCase()),
+										startDay = Number(founds[2]),
+										endMonth = months.indexOf(founds[3].toUpperCase()),
+										endDay = Number(founds[4]);
 
-										dates = {
-											'start': new Date(curYear, startMonth, startDay, timeFrame.start.hours, timeFrame.start.minutes),
-											'end': new Date(curYear, startMonth, startDay, timeFrame.end.hours, timeFrame.end.minutes),
-											'finish': new Date(curYear, endMonth, endDay)
-										};
-									}
+									dates = {
+										'start': new Date(curYear, startMonth, startDay, timeFrame.start.hours, timeFrame.start.minutes),
+										'end': new Date(curYear, startMonth, startDay, timeFrame.end.hours, timeFrame.end.minutes),
+										'finish': new Date(curYear, endMonth, endDay)
+									};
 								}
 							}
 						}
-
-						data.push({
-							'title': title,
-							'description': '<b>What\'s it all about?</b> '+ description + ' <br><br><b>Contact:</b> Greg Brewer at <a href="mailto:greg.brewer@ccnash.org">greg.brewer@ccnash.org</a>',
-							'location': location,
-							'dates': dates,
-							'recurrence': 'WEEKLY'
-						});
-
-						break;
 					}
+
+					if (dates != null) {
+						var dayName = dayweek[dates.start.getDay()].toLowerCase();
+
+						if (populate_days.indexOf(dayName) > -1) {
+							data.push({
+								'title': title,
+								'description': '<b>What\'s it all about?</b> '+ description + ' <br><br><b>Contact:</b> Greg Brewer at <a href="mailto:greg.brewer@ccnash.org">greg.brewer@ccnash.org</a>',
+								'location': location,
+								'dates': dates,
+								'recurrence': 'WEEKLY'
+							});
+						}
+					}
+
+					break;
 				}
 			}
 		} else {
@@ -340,9 +353,9 @@ function ParseEvents(populate_days) {
 						}
 
 						if (dates != null) {
-							day = date.start.getDay().toLowerCase();
+							var dayName = dayweek[dates.start.getDay()].toLowerCase();
 
-							if (populate_days.indexOf(day) > -1) {
+							if (populate_days.indexOf(dayName) > -1) {
 								data.push({
 									'title': title,
 									'description': '<b>What\'s it all about?</b> '+ description + ' <br><br><b>Contact:</b> Greg Brewer at <a href="mailto:greg.brewer@ccnash.org">greg.brewer@ccnash.org</a>',
@@ -377,7 +390,7 @@ function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, exclusion
 				var recurrence = CalendarApp.newRecurrence().addWeeklyRule();
 
 				for (var i = 0; i < exclusion_dates.length; i++) {
-					recurrence = recurrence.addDateExclusion(exclusion_dates[i]);
+					recurrence.addDateExclusion(exclusion_dates[i]);
 				}
 
 				if (event.dates['finish'] != null) {

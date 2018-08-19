@@ -1,7 +1,7 @@
 function onOpen(e) {
 	var ui = DocumentApp.getUi();
 
-	ui.createMenu('Automation')
+	ui.createMenu('CloudFire')
 		.addItem('Read Instructions', 'instructionsDialogueBox') 
 		.addItem('Format Text', 'myFunction')
 		.addSeparator()

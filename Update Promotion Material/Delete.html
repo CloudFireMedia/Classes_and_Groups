@@ -86,7 +86,7 @@
 			$('#delete-btn').on('click', function(e) {
 				e.preventDefault();
 
-				$(this).prop('disabled', true);
+				$('#delete-btn').button('option', 'disabled', true);
 
 				var settings = $('#settings').serializeArray(),
 					values = {};
@@ -120,7 +120,7 @@
 			}
 
 			function onDeleteFailure(e) {
-				$('#delete-btn').prop('disabled', false);
+				$('#delete-btn').button('option', 'disabled', false);
 			}
 		});
 	</script>

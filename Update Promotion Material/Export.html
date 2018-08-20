@@ -133,6 +133,8 @@
 			$('#export-btn').on('click', function(e) {
 				e.preventDefault();
 
+				$(this).prop('disabled', true);
+
 				var settings = $('#settings').serializeArray(),
 					values = {};
 
@@ -165,7 +167,7 @@
 			}
 
 			function onParseFailure(e) {
-				//
+				$('#export-btn').prop('disabled', false);
 			}
 		});
 	</script>

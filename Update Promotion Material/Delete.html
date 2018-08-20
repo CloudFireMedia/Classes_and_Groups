@@ -51,7 +51,7 @@
 			text-align: left;
 		}
 
-		#export-btn {
+		#delete-btn {
 			border: 1px solid #c5c5c5;
 			width: 100%;
 			margin: 0;
@@ -86,6 +86,8 @@
 			$('#delete-btn').on('click', function(e) {
 				e.preventDefault();
 
+				$(this).prop('disabled', true);
+
 				var settings = $('#settings').serializeArray(),
 					values = {};
 
@@ -118,7 +120,7 @@
 			}
 
 			function onDeleteFailure(e) {
-				//
+				$('#delete-btn').prop('disabled', false);
 			}
 		});
 	</script>

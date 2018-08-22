@@ -29,9 +29,8 @@ function ShowDeletePopup() {
 	ui.showModalDialog(html, 'Delete settings');
 }
 
-function DeleteEvents(calendar_name) {
+function DeleteEvents(calendars_names) {
 	var doc = DocumentApp.getActiveDocument(),
-		calendars = CalendarApp.getCalendarsByName(calendar_name),
 		title = doc.getName(),
 		year = 1970,
 		month = 0,
@@ -47,9 +46,9 @@ function DeleteEvents(calendar_name) {
 	var start = new Date(year, month, day, 0, 0, 0),
 		end = new Date((year + 1), month, day, 0, 0, 0);
 
-	for (var i = 0; i < calendars.length; i++) {
-		var calendar = calendars[i],
-			events = calendar.getEvents(start, end);
+	for (var i = 0; i < calendars_names.length; i++) {
+		var calendar = CalendarApp.getCalendarsByName(calendars_names[i]),
+			events = calendar[0].getEvents(start, end);
 
 		while (events.length > 0) {
 			var event = events[0];
@@ -60,7 +59,7 @@ function DeleteEvents(calendar_name) {
 				event.deleteEvent();
 			}
 
-			events = calendar.getEvents(start, end);
+			events = calendar[0].getEvents(start, end);
 		}
 	}
 }

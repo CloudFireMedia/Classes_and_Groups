@@ -124,13 +124,13 @@ function ParseEvents(populate_days) {
 			'DECEMBER'
 		],
 		dayweek = [
+			'SUNDAY',
 			'MONDAY',
 			'TUESDAY',
 			'WEDNESDAY',
 			'THURSDAY',
 			'FRIDAY',
-			'SATURDAY',
-			'SUNDAY'
+			'SATURDAY'
 		],
 		data = [],
 		isOtherEvents = false,

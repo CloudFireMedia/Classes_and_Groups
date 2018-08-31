@@ -214,7 +214,8 @@ function ParseEvents(populate_days) {
 						dates = {
 							'start': new Date(curYear, curMonth, curDay, timeFrame.start.hours, timeFrame.start.minutes),
 							'end': new Date(curYear, curMonth, curDay, timeFrame.end.hours, timeFrame.end.minutes)
-						};
+						},
+						conditions;
 
 					if (pDate.getHeading() == DocumentApp.ParagraphHeading.HEADING6) {
 						var note = pDate.getText().toUpperCase().trim(),
@@ -253,19 +254,31 @@ function ParseEvents(populate_days) {
 									};
 								}
 							}
+
+							founds = note.match(/^(([1-4]{1})(ST|ND|RD|TH))\s(SUNDAY|MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY)\sOF\sTHE\sMONTH$/);
+
+							if (founds != null) {
+								if (founds.length == 5) {
+									conditions = {
+										'queue': Number(founds[2]),
+										'day': founds[4]
+									};
+								}
+							}
 						}
 					}
 
 					if (dates != null) {
 						var dayName = dayweek[dates.start.getDay()].toLowerCase();
 
-						if (populate_days.indexOf(dayName) > -1) {
+						if (populate_days.indexOf(dayName) >= 0) {
 							data.push({
 								'title': title,
 								'description': '<b>What\'s it all about?</b> '+ description + ' <br><br><b>Contact:</b> Greg Brewer at <a href="mailto:greg.brewer@ccnash.org">greg.brewer@ccnash.org</a>',
 								'location': location,
 								'dates': dates,
-								'recurrence': 'WEEKLY'
+								'recurrence': (conditions != null) ? 'MONTHLY' : 'WEEKLY',
+								'conditions': conditions
 							});
 						}
 					}
@@ -274,8 +287,6 @@ function ParseEvents(populate_days) {
 				}
 			}
 		} else {
-			var dates = null;
-
 			switch (heading) {
 				// title & location
 				case DocumentApp.ParagraphHeading.HEADING3: {
@@ -305,7 +316,8 @@ function ParseEvents(populate_days) {
 				case DocumentApp.ParagraphHeading.HEADING5: {
 					var description = text.trim(),
 						pDate = paragraphs[i + 1],
-						curYear = docDate.getFullYear();
+						curYear = docDate.getFullYear(),
+						dates;
 
 					if (pDate.getHeading() == DocumentApp.ParagraphHeading.HEADING6) {
 						var note = pDate.getText().toUpperCase().trim(),
@@ -355,7 +367,7 @@ function ParseEvents(populate_days) {
 						if (dates != null) {
 							var dayName = dayweek[dates.start.getDay()].toLowerCase();
 
-							if (populate_days.indexOf(dayName) > -1) {
+							if (populate_days.indexOf(dayName) >= 0) {
 								data.push({
 									'title': title,
 									'description': '<b>What\'s it all about?</b> '+ description + ' <br><br><b>Contact:</b> Greg Brewer at <a href="mailto:greg.brewer@ccnash.org">greg.brewer@ccnash.org</a>',
@@ -386,6 +398,35 @@ function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, exclusion
 			};
 
 		switch (event.recurrence) {
+			case 'MONTHLY': {
+				if (event.conditions != null) {
+					var recurrence = CalendarApp.newRecurrence().addWeeklyRule(),
+						startDay = (7 * (event.conditions.queue - 1)),
+						excludeDays = [];
+
+					for (var i = 1; i <= 31; i++) {
+						excludeDays.push(i);
+					}
+
+					excludeDays.splice(excludeDays.indexOf(startDay) + 1, 7);
+
+					recurrence.addMonthlyExclusion().onlyOnMonthDays(excludeDays).onlyOnWeekday(CalendarApp.Weekday[event.conditions.day]);
+
+					if (event.dates['finish'] != null) {
+						recurrence.until(event.dates.finish);
+					}
+				}
+
+				calendar.createEventSeries(
+					event.title,
+					event.dates.start,
+					event.dates.end,
+					recurrence,
+					options
+				);
+
+				break;
+			}
 			case 'WEEKLY': {
 				var recurrence = CalendarApp.newRecurrence().addWeeklyRule();
 

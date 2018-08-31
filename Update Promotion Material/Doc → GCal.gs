@@ -410,7 +410,9 @@ function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, exclusion
 
 					excludeDays.splice(excludeDays.indexOf(startDay) + 1, 7);
 
-					recurrence.addMonthlyExclusion().onlyOnMonthDays(excludeDays).onlyOnWeekday(CalendarApp.Weekday[event.conditions.day]);
+					recurrence.addMonthlyExclusion()
+							  .onlyOnMonthDays(excludeDays)
+							  .onlyOnWeekday(CalendarApp.Weekday[event.conditions.day]);
 
 					if (event.dates['finish'] != null) {
 						recurrence.until(event.dates.finish);

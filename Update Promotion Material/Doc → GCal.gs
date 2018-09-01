@@ -408,7 +408,7 @@ function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, exclusion
 						excludeDays.push(i);
 					}
 
-					excludeDays.splice(excludeDays.indexOf(startDay) + 1, 7);
+					excludeDays.splice(excludeDays.indexOf(startDay + 1), 7);
 
 					recurrence.addMonthlyExclusion()
 							  .onlyOnMonthDays(excludeDays)

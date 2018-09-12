@@ -400,25 +400,19 @@ function ExportEvents(settings) {
 		newEventsCalendars = CalendarApp.getCalendarsByName(settings.new_events_calendar),
 		exclusion_dates = GetExclusionDates(settings.exclude_dates_ss_url),
 		data = ParseEvents(),
-		other_events = data['OTHER EVENTS'].events,
 		events = [];
 
 	for (var index in data) {
 		var section = data[index];
 
-		if (settings.populate_days.indexOf(section.title.toLowerCase()) > -1) {
-			for (var i = 0; i < section.events.length; i++) {
-				events.push(section.events[i]);
+		for (var i = 0; i < section.events.length; i++) {
+			var event = section.events[i],
+				day_index = event.Start.getDay(),
+				day_name = getDayName(day_index);
+
+			if (settings.populate_days.indexOf(day_name.toLowerCase()) > -1) {
+				events.push(event);
 			}
-		}
-	}
-
-	for (var i = 0; i < other_events.length; i++) {
-		var event = other_events[i],
-			day = event.StartDate.getDay();
-
-		if (settings.populate_days.indexOf(day.toLowerCase()) > -1) {
-			events.push(event);
 		}
 	}
 

@@ -360,7 +360,7 @@ function GetExclusionDates(url) {
 
 function ShowExportPopup() {
 	var ui = SpreadsheetApp.getUi(),
-		tmpl = HtmlService.createTemplateFromFile('Export.html'),
+		tmpl = HtmlService.createTemplateFromFile('Update Promotion Material/Export.html'),
 		all_calendars = CalendarApp.getAllCalendars(),
 		calendars = [];
 

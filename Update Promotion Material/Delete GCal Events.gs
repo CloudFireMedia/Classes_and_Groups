@@ -1,6 +1,6 @@
 function ShowDeletePopup() {
 	var ui = SpreadsheetApp.getUi(),
-		tmpl = HtmlService.createTemplateFromFile('Delete.html'),
+		tmpl = HtmlService.createTemplateFromFile('Update Promotion Material/Delete.html'),
 		all_calendars = CalendarApp.getAllCalendars(),
 		calendars = [];
 

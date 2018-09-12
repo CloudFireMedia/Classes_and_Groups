@@ -85,6 +85,20 @@ function getDateByName(sheetName) {
 	return new Date(sheetYear, sheetMonth, sheetDay);
 }
 
+function getDayName(index) {
+	var days = [
+			'SUNDAY',
+			'MONDAY',
+			'TUESDAY',
+			'WEDNESDAY',
+			'THURSDAY',
+			'FRIDAY',
+			'SATURDAY'
+		];
+
+	return days[index];
+}
+
 function CreateScheduleDoc() {
 	var ss = SpreadsheetApp.getActive(),
 		sheet = ss.getActiveSheet(),
@@ -386,15 +400,25 @@ function ExportEvents(settings) {
 		newEventsCalendars = CalendarApp.getCalendarsByName(settings.new_events_calendar),
 		exclusion_dates = GetExclusionDates(settings.exclude_dates_ss_url),
 		data = ParseEvents(),
+		other_events = data['OTHER EVENTS'].events,
 		events = [];
 
-	for (var i = 0; i < data.length; i++) {
-		var section = data[i];
+	for (var index in data) {
+		var section = data[index];
 
 		if (settings.populate_days.indexOf(section.title.toLowerCase()) > -1) {
-			for (var j = 0; j < section.events.length; j++) {
-				events.push(section.events[j]);
+			for (var i = 0; i < section.events.length; i++) {
+				events.push(section.events[i]);
 			}
+		}
+	}
+
+	for (var i = 0; i < other_events.length; i++) {
+		var event = other_events[i],
+			day = event.StartDate.getDay();
+
+		if (settings.populate_days.indexOf(day.toLowerCase()) > -1) {
+			events.push(event);
 		}
 	}
 
@@ -403,16 +427,6 @@ function ExportEvents(settings) {
 }
 
 function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, exclusion_dates, data) {
-	var days = [
-			'SUNDAY',
-			'MONDAY',
-			'TUESDAY',
-			'WEDNESDAY',
-			'THURSDAY',
-			'FRIDAY',
-			'SATURDAY'
-		];
-
 	for (var i = 0; i < data.length; i++) {
 		var event = data[i],
 			calendar = !event.IsNew ? regularEventsCalendar : newEventsCalendar,
@@ -430,7 +444,11 @@ function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, exclusion
 				}*/
 
 				if (event['Finish'] != null) {
-					recurrence.until(event.Finish);
+					var finishDate = new Date(event.Finish);
+
+					finishDate.setDate(finishDate.getDate() + 1);
+
+					recurrence.until(finishDate);
 				}
 
 				switch (event.Recurrence.Conditions.Type) {
@@ -439,7 +457,7 @@ function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, exclusion
 					}
 					case 'WEEKDAY': {
 						var startDay = (7 * (event.Recurrence.Conditions.Queue - 1)),
-							weekday = days[event.Recurrence.Conditions.Day],
+							weekday = getDayName(event.Recurrence.Conditions.Day),
 							excludeDays = [];
 
 						for (var j = 1; j <= 31; j++) {
@@ -474,7 +492,11 @@ function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, exclusion
 				}*/
 
 				if (event['Finish'] != null) {
-					recurrence.until(event.Finish);
+					var finishDate = new Date(event.Finish);
+
+					finishDate.setDate(finishDate.getDate() + 1);
+
+					recurrence.until(finishDate);
 				}
 
 				calendar.createEventSeries(

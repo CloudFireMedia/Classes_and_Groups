@@ -299,11 +299,11 @@ function ParseEvents() {
 						break;
 					}
 					case 'each selected week and day of the week': {
-						var firstDay = new Date(eventObj.Start.getFullYear(), eventObj.Start.getMonth(), 1).getDay();
+						var firstDay = new Date(eventObj.Start.getFullYear(), eventObj.Start.getMonth(), 1);
 
 						eventObj.Recurrence['Conditions'] = {
 							'Type': 'WEEKDAY',
-							'Queue': Math.ceil((eventObj.Start.getDate() + firstDay) / 7),
+							'Queue': Math.ceil((eventObj.Start.getDate() + firstDay.getDay()) / 7),
 							'Day': eventObj.Start.getDay()
 						};
 
@@ -450,7 +450,7 @@ function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, exclusion
 						break;
 					}
 					case 'WEEKDAY': {
-						var startDay = (7 * (event.Recurrence.Conditions.Queue - 1)),
+						var startDay = (7 * event.Recurrence.Conditions.Queue),
 							weekday = getDayName(event.Recurrence.Conditions.Day),
 							excludeDays = [];
 

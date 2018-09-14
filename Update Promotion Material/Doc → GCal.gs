@@ -303,7 +303,7 @@ function ParseEvents() {
 
 						eventObj.Recurrence['Conditions'] = {
 							'Type': 'WEEKDAY',
-							'Queue': Math.ceil((eventObj.Start.getDate() + firstDay.getDay()) / 7),
+							'Queue': Math.floor((eventObj.Start.getDate() + firstDay.getDay()) / 7),
 							'Day': eventObj.Start.getDay()
 						};
 
@@ -450,7 +450,7 @@ function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, exclusion
 						break;
 					}
 					case 'WEEKDAY': {
-						var startDay = (7 * event.Recurrence.Conditions.Queue),
+						var startDay = (7 * (event.Recurrence.Conditions.Queue - 1)),
 							weekday = getDayName(event.Recurrence.Conditions.Day),
 							excludeDays = [];
 

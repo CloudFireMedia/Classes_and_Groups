@@ -1,16 +1,3 @@
-// created by Mikhail K. on freelancer.com
-
-/*
-function onOpen(e) {
-	var ui = SpreadsheetApp.getUi();
-
-	ui.createMenu('CloudFire')
-		.addItem('Create schedule document', 'CreateScheduleDoc') 
-		.addItem('Add to calendar', 'ShowExportPopup')
-		.addItem('Delete from calendar', 'ShowDeletePopup')
-		.addToUi();
-}
-*/
 function Test_1() {
 	ExportEvents({
 		'regular_events_calendar': 'TEST',

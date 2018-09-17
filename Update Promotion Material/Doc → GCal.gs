@@ -62,7 +62,7 @@ function ExportEvents(settings) {
 
 function GetExclusionDates(url) {
 	var ss = SpreadsheetApp.openByUrl(url),
-		sheet = ss.getSheetByName('Calendars Blackout Dates'),
+		sheet = ss.getSheetByName(Config.get('BLACKOUT_DATES_DATA_SHEET_NAME')),
 		ranges = sheet.getRangeList(['A5:A', 'D5:D', 'H5:S']).getRanges(),
 		titles = ranges[0].getValues(),
 		values = ranges[1].getValues(),

@@ -20,8 +20,8 @@ function AddTrigger(year, month, day) {
 }
 
 function ChangeFilename() {
-	var ss = SpreadsheetApp.openById('1d0-hBf96ilIpAO67LR86leEq09jYP2866uWC48bJloc'),
-		sheet = ss.getSheetByName('Communications Director Master'),
+	var ss = SpreadsheetApp.openById(Config.get('PROMOTION_DEADLINES_CALENDAR_SPREADSHEET_ID')),
+		sheet = ss.getSheetByName(Config.get('EVENTS_DATA_SHEET_NAME')),
 		ranges = sheet.getRangeList(['D4:D', 'E4:E']).getRanges(),
 		dates = ranges[0].getValues(),
 		titles = ranges[1].getValues();
@@ -30,8 +30,8 @@ function ChangeFilename() {
 		var title = String(titles[i][0]).trim(),
 			date = dates[i][0];
 
-		if (title == 'Christ Church Communities (C3) Fall Classes and Groups') {
-			var doc = DocumentApp.openById('1IERhnXTjuLF47if9kwvPja00ETBsgBmrcHHZSNdoyHo'),
+		if (title == Config.get('CLASSES_AND_GROUPS_DEADLINE_EVENT_NAME')) {
+			var doc = DocumentApp.openById(Config.get('CLASSES_AND_GROUPS_DOCUMENT_ID')),
 				year = date.getFullYear(),
 				month = date.getMonth() + 1,
 				fullMonth = (month < 10) ? ('0' + month) : month,

@@ -17,6 +17,16 @@ function to24Hours(hours, period) {
 	return hours;
 }
 
+function isInArray(arr, obj) {
+	for (var i = 0; i < arr.length; i++) {
+		if (+arr[i] === +obj) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 function ShowExportPopup() {
 	var ui = DocumentApp.getUi(),
 		tmpl = HtmlService.createTemplateFromFile('Update Promotion Material/Export.html'),
@@ -46,7 +56,8 @@ function ExportEvents(settings) {
 		events = ParseEvents(settings.populate_days),
 		exclusion_dates = GetExclusionDates(settings.exclude_dates_ss_url);
 
-	AddEventsToCalendar(regularEventsCalendars[0], newEventsCalendars[0], exclusion_dates, events);
+	AddEventsToCalendar(regularEventsCalendars[0], newEventsCalendars[0], events);
+	ExcludeEvents([regularEventsCalendars[0], newEventsCalendars[0]], exclusion_dates);
 }
 
 function GetExclusionDates(url) {
@@ -66,13 +77,11 @@ function GetExclusionDates(url) {
 			var start, end;
 
 			for (var col = 0; col < periods[i].length; col++) {
-				var date = periods[i][col];
-
-				if (date != '') {
+				if (!isNaN(periods[i][col])) {
 					if ((col + 1) % 2 != 0) {
-						start = date;
+						start = new Date(periods[i][col]);
 					} else {
-						end = date;
+						end = new Date(periods[i][col]);
 
 						if (start < end) {
 							var startTS = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate()),
@@ -80,14 +89,18 @@ function GetExclusionDates(url) {
 								days = Math.floor((endTS - startTS) / (1000*60*60*24));
 
 							for (var j = 0; j <= days; j++) {
-								var tmpDate = new Date(start);
+								var date = new Date(start);
 
-								tmpDate.setDate(tmpDate.getDate() + j);
+								date.setDate(date.getDate() + j);
 
-								dates.push(tmpDate);
+								if (!isInArray(dates, date)) {
+									dates.push(date);
+								}
 							}
 						} else {
-							dates.push(start);
+							if (!isInArray(dates, start)) {
+								dates.push(start);
+							}
 						}
 					}
 				}
@@ -388,7 +401,7 @@ function ParseEvents(populate_days) {
 	return data;
 }
 
-function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, exclusion_dates, data) {
+function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, data) {
 	for (var index in data) {
 		var event = data[index],
 			calendar = event.title.toUpperCase().indexOf('NEW!') < 0 ? regularEventsCalendar : newEventsCalendar,
@@ -432,10 +445,6 @@ function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, exclusion
 			case 'WEEKLY': {
 				var recurrence = CalendarApp.newRecurrence().addWeeklyRule();
 
-				for (var i = 0; i < exclusion_dates.length; i++) {
-					recurrence.addDateExclusion(exclusion_dates[i]);
-				}
-
 				if (event.dates['finish'] != null) {
 					recurrence.until(event.dates.finish);
 				}
@@ -459,6 +468,20 @@ function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, exclusion
 				);
 
 				break;
+			}
+		}
+	}
+}
+
+function ExcludeEvents(calendars, exclusion_dates) {
+	for (var index in exclusion_dates) {
+		var date = exclusion_dates[index];
+
+		for (var i = 0; i < calendars.length; i++) {
+			var events = calendars[i].getEventsForDay(date);
+
+			for (var j = 0; j < events.length; j++) {
+				events[j].deleteEvent();
 			}
 		}
 	}

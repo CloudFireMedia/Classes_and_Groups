@@ -30,8 +30,8 @@ function ChangeFilename() {
 		var title = String(titles[i][0]).trim(),
 			date = dates[i][0];
 
-		if (title == 'Christ Church Communities (C3) Fall Classes and Groups') {
-			var doc = DocumentApp.openById('1IERhnXTjuLF47if9kwvPja00ETBsgBmrcHHZSNdoyHo'),
+        if (title == 'Christ Church Communities (C3) Fall Classes and Groups') {
+            var doc = DocumentApp.openById('1IERhnXTjuLF47if9kwvPja00ETBsgBmrcHHZSNdoyHo'),
 				year = date.getFullYear(),
 				month = date.getMonth() + 1,
 				fullMonth = (month < 10) ? ('0' + month) : month,

@@ -155,9 +155,9 @@
 						</div>').appendTo('#fields'),
 					selectEl = $(
 						'<select id="calendar_name" name="calendar_name[]"> \
-							<? for (var index in content.calendars) { ?>
+							<? for (var index in content.calendars) { ?> \
 							<option><?= content.calendars[index] ?></option> \
-							<? } ?>
+							<? } ?> \
 						</select>').appendTo(rowEl);
 
 				$(selectEl).selectmenu();

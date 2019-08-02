@@ -18,3 +18,19 @@ function test_formatDoc() {
   formatDoc_()
   return
 }
+
+function test_DeleteEvents() {
+  DeleteEvents_(["andrew@cloudfire.media"])
+}
+
+function test_deleteAllEvents() {
+  var startTime = new Date(2019, 8, 1)
+  var endTime = new Date(2019, 9, 1)
+  var calendar = CalendarApp.getCalendarsByName('andrew@cloudfire.media')[0]
+  var eventId = calendar.getEventsForDay(endTime)[0].getId()
+  calendar.getEventSeriesById(eventId).deleteEventSeries()
+  
+//  .getEvents(startTime, endTime, options).getEvents(startTime, endTime).forEach(function(event) {
+//    event.deleteEvent()
+//  })
+}

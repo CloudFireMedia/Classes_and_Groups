@@ -1,5 +1,3 @@
-// created by Mikhail K. on freelancer.com
-
 function ShowExportPopup_() {
 
   var ui = DocumentApp.getUi(),
@@ -23,14 +21,12 @@ function ShowExportPopup_() {
 
 function ExportEvents_(settings) {
 
-  console.log(settings);
-
   var regularEventsCalendars = CalendarApp.getCalendarsByName(settings.regular_events_calendar);
   var newEventsCalendars     = CalendarApp.getCalendarsByName(settings.new_events_calendar);
   var events                 = ParseEvents(settings.populate_days);
-//  AJR_TODO var exclusion_dates        = GetExclusionDates(settings.exclude_dates_ss_url);
+//  var exclusion_dates        = GetExclusionDates(settings.exclude_dates_ss_url);
   
-// AJR_TODO  AddEventsToCalendar(regularEventsCalendars[0], newEventsCalendars[0], events);
+  AddEventsToCalendar(regularEventsCalendars[0], newEventsCalendars[0], events);
 // AJR_TODO  ExcludeEvents([regularEventsCalendars[0], newEventsCalendars[0]], exclusion_dates);
   return;
   
@@ -49,6 +45,8 @@ function ExportEvents_(settings) {
     var eventHeadingDay = null; 
     var timeFrame = null;
     var heading3 = null;
+
+    var foundOtherEvents = false;   
     
     for (var i=0; i < paragraphs.length; i++) {
     
@@ -56,11 +54,15 @@ function ExportEvents_(settings) {
       var text      = paragraph.getText().trim();
       var heading   = paragraph.getHeading();
       
-      if (text.toUpperCase() === 'OTHER EVENTS') {    
+      if (text.toUpperCase() === 'OTHER EVENTS') {
+        foundOtherEvents = true;
+      }
+
+      if (foundOtherEvents) {    
       
         processOtherEvents() 
         
-      } else {
+      } else { // Daily classes
       
         switch (heading) {
         
@@ -83,6 +85,11 @@ function ExportEvents_(settings) {
           case DocumentApp.ParagraphHeading.HEADING4:
           case DocumentApp.ParagraphHeading.HEADING5: {
             processHeading45();
+            break;
+          }
+          
+          case DocumentApp.ParagraphHeading.HEADING6: {
+            // Heading 6 is dealt with in processHeading45()
             break;
           }
           
@@ -228,6 +235,8 @@ function ExportEvents_(settings) {
         }
           
         note = note.substring(3);
+        
+        // Look for "Starts [month] [day]", e.g. "Start January 4".
         var finds = note.match(/^STARTS\s*(\w+)\s*([0-9]{1,2})/);
         
         if (finds !== null && finds.length === 3) {
@@ -241,6 +250,7 @@ function ExportEvents_(settings) {
           };
         }
         
+        // Look for "[month] [day] - [month] [day][.|;]", e.g. "April 1 - May 1."
         finds = note.match(/^(\w+)\s*([0-9]{1,2})\s*[–\-]\s*(\w+)\s*([0-9]{1,2})[.;]{0,1}/);
         
         if (finds !== null && finds.length == 5) {
@@ -257,6 +267,7 @@ function ExportEvents_(settings) {
           };
         }
         
+        // Look for "[number][ST|ND|RD|TH] [day of the week] OF THE MONTH", e.g. "1ST SUNDAY OF THE MONTH". 
         finds = note.match(/^(([1-4]{1})(ST|ND|RD|TH))\s(SUNDAY|MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY)\sOF\sTHE\sMONTH/);
         
         if (finds !== null && finds.length === 5) {
@@ -283,85 +294,125 @@ function ExportEvents_(settings) {
     function processOtherEvents() {
       
       switch (heading) {
-      
+
+          // "OTHER EVENTS" heading
+        case DocumentApp.ParagraphHeading.HEADING1: {
+          // Nothing to do 
+          break;
+        }
+        
           // title & location
         case DocumentApp.ParagraphHeading.HEADING3: {
           heading3 = processHeading3(text)
           break;
         }
+        
           // description
         case DocumentApp.ParagraphHeading.HEADING4:
         case DocumentApp.ParagraphHeading.HEADING5: {
-          var description = text.trim(),
-              pDate = paragraphs[i + 1],
-              curYear = docDate.getFullYear(),
-              dates;
-          
-          if (pDate.getHeading() == DocumentApp.ParagraphHeading.HEADING6) {
-            
-            var note = pDate.getText().toUpperCase().trim();
-            
-            if (note.indexOf('>>') == 0) {
-              note = note.substring(3);
-              
-              var finds = note.match(/^STARTS\s*(\w+)\s*([0-9]{1,2})/);
-              
-              if (finds != null) {
-                if (finds.length == 3) {
-                  var month = MONTHS_.indexOf(finds[1].toUpperCase()),
-                      day = Number(finds[2]);
-                  
-                  dates = {
-                    'start': new Date(curYear, month, day, 0, 0),
-                    'end': new Date(curYear, month, day, 24, 0)
-                  };
-                }
-              }
-              
-              finds = note.match(/^\w+\,\s*(\w+)\s*([0-9]{1,31})\s*AT\s*(?:([0-9]{1,2})|([0-9]{1,2})\:([0-9]{1,2}))([AM|PM]{2})$/);
-              
-              if (finds != null) {
-                if (finds.length == 7) {
-                  var month = MONTHS_.indexOf(finds[1].toUpperCase()),
-                      day = Number(finds[2]),
-                      hours,
-                      minutes = 0;
-                  
-                  if (finds[3] != null) {
-                    hours = to24Hours(Number(finds[3]), finds[6]);
-                  } else if (finds[4] != null && finds[5] != null) {
-                    hours = to24Hours(Number(finds[4]), finds[6]);
-                    minutes = finds[5];
-                  }
-                  
-                  dates = {
-                    'start': new Date(curYear, month, day, hours, minutes),
-                    'end': new Date(curYear, month, day, (hours + 1), minutes)
-                  };
-                }
-              }
-            }
-            
-            if (dates != null) {
-              var dayName = DAYS_OF_WEEK_[dates.start.getDay()].toLowerCase();
-              
-              if (populate_days.indexOf(dayName) >= 0) {
-                data.push({
-                  'title': heading3.title,
-                  'description': '<b>What\'s it all about?</b> '+ description + 
-                  ' <br><br><b>Contact:</b> Greg Brewer at <a href="mailto:greg.brewer@ccnash.org">greg.brewer@ccnash.org</a>',
-                  'location': heading3.location,
-                  'dates': dates,
-                  'recurrence': 'ONCE'
-                });
-              }
-            }
-          }
-          
+          processHeading45()
           break;
+        }
+        
+          // recurrence
+        case DocumentApp.ParagraphHeading.HEADING6: {
+          // Dealt with in processHeading45()
+          break;
+        }
+        
+        default: {
+          throw new Error('Unexpected heading type: ' + heading)
         }
       }
       
+      return;
+      
+      // Private Functions
+      // -----------------
+      
+      function processHeading45() {
+        
+        var description = text.trim();
+        var pDate = paragraphs[i + 1];
+        var curYear = docDate.getFullYear();
+        var dates = null;
+        
+        if (pDate.getHeading() !== DocumentApp.ParagraphHeading.HEADING6) {
+          throw new Error('No Heading 6 date for "' + description + '"')
+        }
+        
+        var note = pDate.getText().toUpperCase().trim();
+        
+        if (note.indexOf('>>') === 0) {
+        
+          note = note.substring(3);
+          
+          // Look for "Starts at [number]", e.g. "Starts at 2"
+          var finds = note.match(/^STARTS\s*(\w+)\s*([0-9]{1,2})/);
+          
+          if (finds != null && finds.length == 3) {
+          
+            var month = MONTHS_.indexOf(finds[1].toUpperCase()),
+                day = Number(finds[2]);
+            
+            dates = {
+              'start': new Date(curYear, month, day, 0, 0),
+              'end': new Date(curYear, month, day, 24, 0)
+            };
+          }
+          
+          // Look for "[some text], [month] [day] at [hour]:[minute][am|pm]", e.g. "hello, May 1 at 1:00pm"
+          finds = note.match(/^\w+\,\s*(\w+)\s*([0-9]{1,31})\s*AT\s*(?:([0-9]{1,2})|([0-9]{1,2})\:([0-9]{1,2}))([AM|PM]{2})$/);
+          
+          if (finds !== null && finds.length == 7) {
+          
+            var month = MONTHS_.indexOf(finds[1].toUpperCase());
+            
+            if (month === -1) {
+              throw new Error('Could not find "OTHER EVENTS" month ' + finds[1])
+            }
+            
+            var day = Number(finds[2]);
+            var hours;
+            var minutes = 0;
+            
+            if (finds[3] != null) {
+              hours = to24Hours(Number(finds[3]), finds[6]);
+            } else if (finds[4] != null && finds[5] != null) {
+              hours = to24Hours(Number(finds[4]), finds[6]);
+              minutes = finds[5];
+            }
+            
+            dates = {
+              'start': new Date(curYear, month, day, hours, minutes),
+              'end': new Date(curYear, month, day, (hours + 1), minutes)
+            };
+          }          
+        }
+        
+        if (dates !== null) {
+        
+          var dayName = DAYS_OF_WEEK_[dates.start.getDay()].toLowerCase();
+          
+          if (populate_days.indexOf(dayName) >= 0) {
+          
+            data.push({
+              'title': heading3.title,
+              'description': '<b>What\'s it all about?</b> '+ description + 
+              ' <br><br><b>Contact:</b> Greg Brewer at <a href="mailto:greg.brewer@ccnash.org">greg.brewer@ccnash.org</a>',
+              'location': heading3.location,
+              'dates': dates,
+              'recurrence': 'ONCE'
+            });
+          }
+          
+        } else {
+        
+          throw new Error('No dates assigned for "other events"')
+        }
+        
+      } // ExportEvents_.ParseEvents.processOtherEvents.processHeading45()
+            
     } // ExportEvents_.ParseEvents.processOtherEvents()
 
   } // ExportEvents_.ParseEvents()
@@ -375,7 +426,7 @@ function ExportEvents_(settings) {
       }
     
       var event = data[index];
-      var calendar = event.title.toUpperCase().indexOf('NEW!') < 0 ? regularEventsCalendar : newEventsCalendar;
+      var calendar = event.title.toUpperCase().indexOf('NEW!') === 0 ? newEventsCalendar : regularEventsCalendar;
       var options = {
         location: event.location,
         description: event.description
@@ -440,8 +491,13 @@ function ExportEvents_(settings) {
           
           break;
         }
-      }
-    }
+        default: {
+          throw new Error('Bad recurrence type')
+        }
+        
+      } // switch(recurrence)
+      
+    } // for each event
     
   } // ExportEvents_.AddEventsToCalendar()
   
@@ -471,43 +527,58 @@ function ExportEvents_(settings) {
     var dates = [];
     
     for (var i = 0; i < titles.length; i++) {
-      var title = String(titles[i][0]).trim(),
-          value = String(values[i][0]).toLowerCase().trim();
+    
+      var title = String(titles[i][0]).trim();
+      var value = String(values[i][0]).toLowerCase().trim();
       
-      if (value == 'yes') {
-        var start, end;
+      if (value !== 'yes') {
+        continue;
+      }
+      
+      var start;
+      var end;
+      
+      for (var col = 0; col < periods[i].length; col++) {
         
-        for (var col = 0; col < periods[i].length; col++) {
-          if (!isNaN(periods[i][col])) {
-            if ((col + 1) % 2 != 0) {
-              start = new Date(periods[i][col]);
-            } else {
-              end = new Date(periods[i][col]);
+        if (!isNaN(periods[i][col])) {
+          
+          if ((col + 1) % 2 != 0) {
+            
+            start = new Date(periods[i][col]);
+            
+          } else {
+            
+            end = new Date(periods[i][col]);
+            
+            if (start < end) {
               
-              if (start < end) {
-                var startTS = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate()),
-                    endTS = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate()),
-                    days = Math.floor((endTS - startTS) / (1000*60*60*24));
+              var startTS = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
+              var endTS   = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
+              var days    = Math.floor((endTS - startTS) / NUMBER_OF_MS_IN_A_DAY_);
+              
+              for (var j = 0; j <= days; j++) {
                 
-                for (var j = 0; j <= days; j++) {
-                  var date = new Date(start);
-                  
-                  date.setDate(date.getDate() + j);
-                  
-                  if (!isInArray(dates, date)) {
-                    dates.push(date);
-                  }
+                var date = new Date(start);
+                
+                date.setDate(date.getDate() + j);
+                
+                if (!isInArray(dates, date)) {
+                  dates.push(date);
                 }
-              } else {
-                if (!isInArray(dates, start)) {
-                  dates.push(start);
-                }
+              }
+              
+            } else {
+              
+              if (!isInArray(dates, start)) {
+                dates.push(start);
               }
             }
           }
         }
-      }
-    }
+        
+      } // for each col
+      
+    } // for each day
     
     return dates;
     

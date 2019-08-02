@@ -26,4 +26,6 @@ var DAYS_OF_WEEK_ = [
   'SATURDAY'
 ];
 
-var TEST_DOC_ID_ = '12XwMZoQkukFdZKzGYZIOHW7U5F9dieFe0g-1PtxwyKY'
+var TEST_DOC_ID_ = '12XwMZoQkukFdZKzGYZIOHW7U5F9dieFe0g-1PtxwyKY';
+
+var NUMBER_OF_MS_IN_A_DAY_ = 1000 * 60 * 60 * 24;

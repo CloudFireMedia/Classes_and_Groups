@@ -1,6 +1,7 @@
 // created by Mikhail K. on freelancer.com
 
 function ShowExportPopup_() {
+
   var ui = DocumentApp.getUi(),
       tmpl = HtmlService.createTemplateFromFile('Update Promotion Material/Export.html'),
       all_calendars = CalendarApp.getAllCalendars(),
@@ -16,34 +17,369 @@ function ShowExportPopup_() {
     'calendars': calendars
   };
   
-  var html = tmpl.evaluate().setWidth(520).setHeight(640);
+  var html = tmpl.evaluate().setWidth(520).setHeight(520);
   ui.showModalDialog(html, 'Export settings');
 }
 
 function ExportEvents_(settings) {
 
-  console.log(settings)
+  console.log(settings);
 
   var regularEventsCalendars = CalendarApp.getCalendarsByName(settings.regular_events_calendar);
   var newEventsCalendars     = CalendarApp.getCalendarsByName(settings.new_events_calendar);
   var events                 = ParseEvents(settings.populate_days);
-//  var exclusion_dates        = GetExclusionDates(settings.exclude_dates_ss_url);
+//  AJR_TODO var exclusion_dates        = GetExclusionDates(settings.exclude_dates_ss_url);
   
-  AddEventsToCalendar(regularEventsCalendars[0], newEventsCalendars[0], events);
-//  ExcludeEvents([regularEventsCalendars[0], newEventsCalendars[0]], exclusion_dates);
-  return
+// AJR_TODO  AddEventsToCalendar(regularEventsCalendars[0], newEventsCalendars[0], events);
+// AJR_TODO  ExcludeEvents([regularEventsCalendars[0], newEventsCalendars[0]], exclusion_dates);
+  return;
   
   // Private Functions
   // -----------------
   
+  function ParseEvents(populate_days) {
+  
+    var ui = getUi_();
+    var doc = getDoc_();    
+    var docDate = getDocDate(doc.getName());
+    var body = doc.getBody();
+    var paragraphs = body.getParagraphs();
+    
+    var data = [];
+    var eventHeadingDay = null; 
+    var timeFrame = null;
+    var heading3 = null;
+    
+    for (var i=0; i < paragraphs.length; i++) {
+    
+      var paragraph = paragraphs[i];
+      var text      = paragraph.getText().trim();
+      var heading   = paragraph.getHeading();
+      
+      if (text.toUpperCase() === 'OTHER EVENTS') {    
+      
+        processOtherEvents() 
+        
+      } else {
+      
+        switch (heading) {
+        
+            // day of the week
+          case DocumentApp.ParagraphHeading.HEADING1: {
+            processHeading1();
+            break;
+          }
+            // time
+          case DocumentApp.ParagraphHeading.HEADING2: {
+            timeFrame = processHeading2(text);
+            break;          
+          }
+            // title & location
+          case DocumentApp.ParagraphHeading.HEADING3: {
+            var heading3 = processHeading3();
+            break;
+          }
+            // description
+          case DocumentApp.ParagraphHeading.HEADING4:
+          case DocumentApp.ParagraphHeading.HEADING5: {
+            processHeading45();
+            break;
+          }
+          
+          default:
+            throw new Error('Unexpected format: ' +  heading)
+          
+        } // switch (heading)
+        
+      } // ! other event
+       
+    } // for each paragraph
+    
+    return data;
+    
+    // Private Functions
+    // -----------------
+
+    function getDocDate(docName) {
+      var docDates = docName.match(/^\[\s([0-9]{4})\.([0-9]{2})\.([0-9]{2})\s\]/);
+      var docYear = Number(docDates[1]);
+      var docMonth = Number(docDates[2]) - 1;
+      var docDay = Number(docDates[3]);
+      var docDate = new Date(docYear, docMonth, docDay);
+      return docDate;
+    }
+
+    /**
+     * If this is the second or more time that a heading has been found
+     * inc the date this class is happening on
+     */
+
+    function processHeading1() {
+      
+      if (eventHeadingDay != null) {
+        docDate.setDate(docDate.getDate() + 1);
+      }
+      
+      eventHeadingDay = text.toLowerCase().trim();
+      
+    } // ExportEvents_.ParseEvents.processDailyEvents.processHeading1
+    
+    function processHeading2(text) {
+      
+      var time = text.toUpperCase().trim();
+      var finds = time.match(/^([0-9]{1,2})\:([0-9]{1,2})([AM|PM]{2})\s*[–\-]\s*([0-9]{1,2})\:([0-9]{1,2})([AM|PM]{2})$/);    
+      var timeFrame = null
+      
+      if (finds !== null) {
+        if (finds.length === 7) {
+          timeFrame = {
+            'start': {
+              'hours': to24Hours(Number(finds[1]), finds[3]),
+              'minutes': Number(finds[2])
+            },
+            'end': {
+              'hours': to24Hours(Number(finds[4]), finds[6]),
+              'minutes': Number(finds[5])
+            },
+          };
+        }
+      }
+      
+      if (timeFrame === null) {
+        throw new Error('Heading2 must only be used for the time frame');
+      }
+      
+      return timeFrame;
+      
+    } // ExportEvents_.ParseEvents.processDailyEvents.processHeading2
+    
+    function processHeading3() {
+      
+      var header = text.split('|');
+      var title;
+      var location;
+      
+      if (header.length === 2) {
+      
+        title = header[0].trim();
+        location = header[1].trim();
+        
+      } else if (header.length === 3) {
+      
+        title = header[0].trim();
+        location = header[2].trim();
+        
+      } else {
+      
+        throw new Error('Bad Heading3 format. Expected "[title] | [ ... | location] | [location]"')
+      }
+      
+      return {
+        title: title,
+        location: location
+      }
+      
+    } // ExportEvents_.ParseEvents.processDailyEvents.processHeading3
+    
+    function processHeading45() {
+      
+      var description = text.trim();
+      var pDate       = paragraphs[i + 1];
+      var curYear     = docDate.getFullYear();
+      var curMonth    = docDate.getMonth();
+      var curDay      = docDate.getDate();
+      
+      var dates = {
+        'start': new Date(curYear, curMonth, curDay, timeFrame.start.hours, timeFrame.start.minutes),
+        'end': new Date(curYear, curMonth, curDay, timeFrame.end.hours, timeFrame.end.minutes)
+      };
+      
+      var conditions;
+      
+      if (pDate.getHeading() !== DocumentApp.ParagraphHeading.HEADING6) {
+        processHeading6();
+      }
+              
+      var dayName = DAYS_OF_WEEK_[dates.start.getDay()].toLowerCase();
+      
+      if (populate_days.indexOf(dayName) !== -1) {
+        data.push({
+          'title': heading3.title,
+          'description': '<b>What\'s it all about?</b> '+ description + 
+          ' <br><br><b>Contact:</b> Greg Brewer at <a href="mailto:greg.brewer@ccnash.org">greg.brewer@ccnash.org</a>',
+          'location': heading3.location,
+          'dates': dates,
+          'recurrence': (conditions != null) ? 'MONTHLY' : 'WEEKLY',
+          'conditions': conditions
+        });
+      }
+      
+      return 
+      
+      // Private Functions
+      // -----------------
+      
+      function processHeading6() {
+        
+        var note = pDate.getText().toUpperCase().trim();
+        
+        if (note.indexOf('>>') !== 0) {
+          return;
+        }
+          
+        note = note.substring(3);
+        var finds = note.match(/^STARTS\s*(\w+)\s*([0-9]{1,2})/);
+        
+        if (finds !== null && finds.length === 3) {
+        
+          var month = MONTHS_.indexOf(finds[1].toUpperCase());
+          var day = Number(finds[2]);
+          
+          dates = {
+            'start': new Date(curYear, month, day, timeFrame.start.hours, timeFrame.start.minutes),
+            'end': new Date(curYear, month, day, timeFrame.end.hours, timeFrame.end.minutes)
+          };
+        }
+        
+        finds = note.match(/^(\w+)\s*([0-9]{1,2})\s*[–\-]\s*(\w+)\s*([0-9]{1,2})[.;]{0,1}/);
+        
+        if (finds !== null && finds.length == 5) {
+        
+          var startMonth = MONTHS_.indexOf(finds[1].toUpperCase());
+          var startDay   = Number(finds[2]);
+          var endMonth   = MONTHS_.indexOf(finds[3].toUpperCase());
+          var endDay     = Number(finds[4]);
+          
+          dates = {
+            'start': new Date(curYear, startMonth, startDay, timeFrame.start.hours, timeFrame.start.minutes),
+            'end': new Date(curYear, startMonth, startDay, timeFrame.end.hours, timeFrame.end.minutes),
+            'finish': new Date(curYear, endMonth, endDay)
+          };
+        }
+        
+        finds = note.match(/^(([1-4]{1})(ST|ND|RD|TH))\s(SUNDAY|MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY)\sOF\sTHE\sMONTH/);
+        
+        if (finds !== null && finds.length === 5) {
+          conditions = {
+            'queue': Number(finds[2]),
+            'day': finds[4]
+          };
+        }
+
+      } // ExportEvents_.ParseEvents.processDailyEvents.processHeading45.processHeading6
+
+    } // ExportEvents_.ParseEvents.processDailyEvents.processHeading45
+
+    function to24Hours(hours, period) {
+      if (period == 'AM' && hours == 12) {
+        hours = 0;
+      } else if (period == 'PM' && hours < 12) {
+        hours = hours + 12;
+      }
+      return hours;
+      
+    } // ExportEvents_.ParseEvents.to24Hours()
+
+    function processOtherEvents() {
+      
+      switch (heading) {
+      
+          // title & location
+        case DocumentApp.ParagraphHeading.HEADING3: {
+          heading3 = processHeading3(text)
+          break;
+        }
+          // description
+        case DocumentApp.ParagraphHeading.HEADING4:
+        case DocumentApp.ParagraphHeading.HEADING5: {
+          var description = text.trim(),
+              pDate = paragraphs[i + 1],
+              curYear = docDate.getFullYear(),
+              dates;
+          
+          if (pDate.getHeading() == DocumentApp.ParagraphHeading.HEADING6) {
+            
+            var note = pDate.getText().toUpperCase().trim();
+            
+            if (note.indexOf('>>') == 0) {
+              note = note.substring(3);
+              
+              var finds = note.match(/^STARTS\s*(\w+)\s*([0-9]{1,2})/);
+              
+              if (finds != null) {
+                if (finds.length == 3) {
+                  var month = MONTHS_.indexOf(finds[1].toUpperCase()),
+                      day = Number(finds[2]);
+                  
+                  dates = {
+                    'start': new Date(curYear, month, day, 0, 0),
+                    'end': new Date(curYear, month, day, 24, 0)
+                  };
+                }
+              }
+              
+              finds = note.match(/^\w+\,\s*(\w+)\s*([0-9]{1,31})\s*AT\s*(?:([0-9]{1,2})|([0-9]{1,2})\:([0-9]{1,2}))([AM|PM]{2})$/);
+              
+              if (finds != null) {
+                if (finds.length == 7) {
+                  var month = MONTHS_.indexOf(finds[1].toUpperCase()),
+                      day = Number(finds[2]),
+                      hours,
+                      minutes = 0;
+                  
+                  if (finds[3] != null) {
+                    hours = to24Hours(Number(finds[3]), finds[6]);
+                  } else if (finds[4] != null && finds[5] != null) {
+                    hours = to24Hours(Number(finds[4]), finds[6]);
+                    minutes = finds[5];
+                  }
+                  
+                  dates = {
+                    'start': new Date(curYear, month, day, hours, minutes),
+                    'end': new Date(curYear, month, day, (hours + 1), minutes)
+                  };
+                }
+              }
+            }
+            
+            if (dates != null) {
+              var dayName = DAYS_OF_WEEK_[dates.start.getDay()].toLowerCase();
+              
+              if (populate_days.indexOf(dayName) >= 0) {
+                data.push({
+                  'title': heading3.title,
+                  'description': '<b>What\'s it all about?</b> '+ description + 
+                  ' <br><br><b>Contact:</b> Greg Brewer at <a href="mailto:greg.brewer@ccnash.org">greg.brewer@ccnash.org</a>',
+                  'location': heading3.location,
+                  'dates': dates,
+                  'recurrence': 'ONCE'
+                });
+              }
+            }
+          }
+          
+          break;
+        }
+      }
+      
+    } // ExportEvents_.ParseEvents.processOtherEvents()
+
+  } // ExportEvents_.ParseEvents()
+
   function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, data) {
+  
     for (var index in data) {
-      var event = data[index],
-          calendar = event.title.toUpperCase().indexOf('NEW!') < 0 ? regularEventsCalendar : newEventsCalendar,
-            options = {
-              location: event.location,
-              description: event.description
-            };
+    
+      if (!data.hasOwnProperty(index)) {
+        continue;
+      }
+    
+      var event = data[index];
+      var calendar = event.title.toUpperCase().indexOf('NEW!') < 0 ? regularEventsCalendar : newEventsCalendar;
+      var options = {
+        location: event.location,
+        description: event.description
+      };
       
       switch (event.recurrence) {
         case 'MONTHLY': {
@@ -189,314 +525,5 @@ function ExportEvents_(settings) {
     } // ExportEvents_.GetExclusionDates.isInArray()
     
   } // ExportEvents_.GetExclusionDates()
-    
-  function ParseEvents(populate_days) {
-  
-    var ui = getUi_();
-    var doc = getDoc_();
-    var body = doc.getBody();
-    var paragraphs = body.getParagraphs();
-    var docName = doc.getName();
-    var docDates = docName.match(/^\[\s([0-9]{4})\.([0-9]{2})\.([0-9]{2})\s\]/);
-    var docYear = Number(docDates[1]);
-    var docMonth = Number(docDates[2]) - 1;
-    var docDay = Number(docDates[3]);
-    var docDate = new Date(docYear, docMonth, docDay);
-    var months = [
-      'JANUARY',
-      'FEBRUARY',
-      'MARCH',
-      'APRIL',
-      'MAY',
-      'JUNE',
-      'JULY',
-      'AUGUST',
-      'SEPTEMBER',
-      'OCTOBER',
-      'NOVEMBER',
-      'DECEMBER'
-    ];
-    var dayweek = [
-      'SUNDAY',
-      'MONDAY',
-      'TUESDAY',
-      'WEDNESDAY',
-      'THURSDAY',
-      'FRIDAY',
-      'SATURDAY'
-    ];
-    var data = [];
-    var isOtherEvents = false;
-    var day; 
-    var timeFrame;
-    var location; 
-    var title;
-    
-    for (var i=0; i < paragraphs.length; i++) {
-      var paragraph = paragraphs[i];
-          text = paragraph.getText().trim(),
-          heading = paragraph.getHeading();
       
-      if (text.toUpperCase() == 'OTHER EVENTS') {
-        isOtherEvents = true;
-      }
-      
-      if (!isOtherEvents) {
-        switch (heading) {
-            // day of the week
-          case DocumentApp.ParagraphHeading.HEADING1: {
-            if (day != null) {
-              docDate.setDate(docDate.getDate() + 1);
-            }
-            
-            day = text.toLowerCase().trim();
-            
-            break;
-          }
-            // time
-          case DocumentApp.ParagraphHeading.HEADING2: {
-            var time = text.toUpperCase().trim(),
-                founds = time.match(/^([0-9]{1,2})\:([0-9]{1,2})([AM|PM]{2})\s*[–\-]\s*([0-9]{1,2})\:([0-9]{1,2})([AM|PM]{2})$/);
-            
-            if (founds != null) {
-              if (founds.length == 7) {
-                timeFrame = {
-                  'start': {
-                    'hours': to24Hours(Number(founds[1]), founds[3]),
-                    'minutes': Number(founds[2])
-                  },
-                  'end': {
-                    'hours': to24Hours(Number(founds[4]), founds[6]),
-                    'minutes': Number(founds[5])
-                  },
-                };
-              }
-            }
-            
-            break;
-          }
-            // title & location
-          case DocumentApp.ParagraphHeading.HEADING3: {
-            var header = text.split('|');
-            
-            if (header.length > 1) {
-              switch (header.length) {
-                case 2: {
-                  title = header[0].trim();
-                  location = header[1].trim();
-                  
-                  break;
-                }
-                case 3: {
-                  title = header[0].trim();
-                  location = header[2].trim();
-                  
-                  break;
-                }
-              }
-            }
-            
-            break;
-          }
-            // description
-          case DocumentApp.ParagraphHeading.HEADING4:
-          case DocumentApp.ParagraphHeading.HEADING5: {
-            var description = text.trim(),
-                pDate = paragraphs[i + 1],
-                curYear = docDate.getFullYear(),
-                curMonth = docDate.getMonth(),
-                curDay = docDate.getDate(),
-                dates = {
-                  'start': new Date(curYear, curMonth, curDay, timeFrame.start.hours, timeFrame.start.minutes),
-                  'end': new Date(curYear, curMonth, curDay, timeFrame.end.hours, timeFrame.end.minutes)
-                },
-                conditions;
-            
-            if (pDate.getHeading() == DocumentApp.ParagraphHeading.HEADING6) {
-              var note = pDate.getText().toUpperCase().trim(),
-                  founds;
-              
-              if (note.indexOf('>>') == 0) {
-                note = note.substring(3);
-                
-                var founds = note.match(/^STARTS\s*(\w+)\s*([0-9]{1,2})/);
-                
-                if (founds != null) {
-                  if (founds.length == 3) {
-                    var month = months.indexOf(founds[1].toUpperCase()),
-                        day = Number(founds[2]);
-                    
-                    dates = {
-                      'start': new Date(curYear, month, day, timeFrame.start.hours, timeFrame.start.minutes),
-                      'end': new Date(curYear, month, day, timeFrame.end.hours, timeFrame.end.minutes)
-                    };
-                  }
-                }
-                
-                founds = note.match(/^(\w+)\s*([0-9]{1,2})\s*[–\-]\s*(\w+)\s*([0-9]{1,2})[.;]{0,1}/);
-                
-                if (founds != null) {
-                  if (founds.length == 5) {
-                    var startMonth = months.indexOf(founds[1].toUpperCase()),
-                        startDay = Number(founds[2]),
-                        endMonth = months.indexOf(founds[3].toUpperCase()),
-                        endDay = Number(founds[4]);
-                    
-                    dates = {
-                      'start': new Date(curYear, startMonth, startDay, timeFrame.start.hours, timeFrame.start.minutes),
-                      'end': new Date(curYear, startMonth, startDay, timeFrame.end.hours, timeFrame.end.minutes),
-                      'finish': new Date(curYear, endMonth, endDay)
-                    };
-                  }
-                }
-                
-                founds = note.match(/^(([1-4]{1})(ST|ND|RD|TH))\s(SUNDAY|MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY)\sOF\sTHE\sMONTH/);
-                
-                if (founds != null) {
-                  if (founds.length == 5) {
-                    conditions = {
-                      'queue': Number(founds[2]),
-                      'day': founds[4]
-                    };
-                  }
-                }
-              }
-            }
-            
-            if (dates != null) {
-              var dayName = dayweek[dates.start.getDay()].toLowerCase();
-              
-              if (populate_days.indexOf(dayName) >= 0) {
-                data.push({
-                  'title': title,
-                  'description': '<b>What\'s it all about?</b> '+ description + 
-                    ' <br><br><b>Contact:</b> Greg Brewer at <a href="mailto:greg.brewer@ccnash.org">greg.brewer@ccnash.org</a>',
-                  'location': location,
-                  'dates': dates,
-                  'recurrence': (conditions != null) ? 'MONTHLY' : 'WEEKLY',
-                  'conditions': conditions
-                });
-              }
-            }
-            
-            break;
-          }
-        }
-      } else {
-        switch (heading) {
-            // title & location
-          case DocumentApp.ParagraphHeading.HEADING3: {
-            var header = text.split('|');
-            
-            if (header.length > 1) {
-              switch (header.length) {
-                case 2: {
-                  title = header[0].trim();
-                  location = header[1].trim();
-                  
-                  break;
-                }
-                case 3: {
-                  title = header[0].trim();
-                  location = header[2].trim();
-                  
-                  break;
-                }
-              }
-            }
-            
-            break;
-          }
-            // description
-          case DocumentApp.ParagraphHeading.HEADING4:
-          case DocumentApp.ParagraphHeading.HEADING5: {
-            var description = text.trim(),
-                pDate = paragraphs[i + 1],
-                curYear = docDate.getFullYear(),
-                dates;
-            
-            if (pDate.getHeading() == DocumentApp.ParagraphHeading.HEADING6) {
-              var note = pDate.getText().toUpperCase().trim(),
-                  founds;
-              
-              if (note.indexOf('>>') == 0) {
-                note = note.substring(3);
-                
-                var founds = note.match(/^STARTS\s*(\w+)\s*([0-9]{1,2})/);
-                
-                if (founds != null) {
-                  if (founds.length == 3) {
-                    var month = months.indexOf(founds[1].toUpperCase()),
-                        day = Number(founds[2]);
-                    
-                    dates = {
-                      'start': new Date(curYear, month, day, 0, 0),
-                      'end': new Date(curYear, month, day, 24, 0)
-                    };
-                  }
-                }
-                
-                founds = note.match(/^\w+\,\s*(\w+)\s*([0-9]{1,31})\s*AT\s*(?:([0-9]{1,2})|([0-9]{1,2})\:([0-9]{1,2}))([AM|PM]{2})$/);
-                
-                if (founds != null) {
-                  if (founds.length == 7) {
-                    var month = months.indexOf(founds[1].toUpperCase()),
-                        day = Number(founds[2]),
-                        hours,
-                        minutes = 0;
-                    
-                    if (founds[3] != null) {
-                      hours = to24Hours(Number(founds[3]), founds[6]);
-                    } else if (founds[4] != null && founds[5] != null) {
-                      hours = to24Hours(Number(founds[4]), founds[6]);
-                      minutes = founds[5];
-                    }
-                    
-                    dates = {
-                      'start': new Date(curYear, month, day, hours, minutes),
-                      'end': new Date(curYear, month, day, (hours + 1), minutes)
-                    };
-                  }
-                }
-              }
-              
-              if (dates != null) {
-                var dayName = dayweek[dates.start.getDay()].toLowerCase();
-                
-                if (populate_days.indexOf(dayName) >= 0) {
-                  data.push({
-                    'title': title,
-                    'description': '<b>What\'s it all about?</b> '+ description + 
-                      ' <br><br><b>Contact:</b> Greg Brewer at <a href="mailto:greg.brewer@ccnash.org">greg.brewer@ccnash.org</a>',
-                    'location': location,
-                    'dates': dates,
-                    'recurrence': 'ONCE'
-                  });
-                }
-              }
-            }
-            
-            break;
-          }
-        }
-      }
-    }
-    
-    return data;
-    
-    // Private Functions
-    // -----------------
-    
-    function to24Hours(hours, period) {
-      if (period == 'AM' && hours == 12) {
-        hours = 0;
-      } else if (period == 'PM' && hours < 12) {
-        hours = hours + 12;
-      }
-      return hours;
-      
-    } // ExportEvents_.ParseEvents.to24Hours()
-    
-  } // ExportEvents_.ParseEvents()
-  
 } // ExportEvents_()

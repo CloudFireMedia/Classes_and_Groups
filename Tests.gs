@@ -1,6 +1,11 @@
 function test_misc() {
-  var time = ''
-  var finds = time.match(/^([0-9]{1,2})\:([0-9]{1,2})([AM|PM]{2})\s*[–\-]\s*([0-9]{1,2})\:([0-9]{1,2})([AM|PM]{2})$/);    
+  var firstWord = "9:00am – 10:00am"
+  var b = "9:00am"
+    var patt = new RegExp(/([0-9]((\ ){0,1})((AM)|(PM)|(am)|(pm)))|([1-9]:[0-5][0-9]((\ ){0,1})((AM)|(PM)|(am)|(pm)))|(1[0-2]:[0-5][0-9]((\ ){0,1})((AM)|(PM)|(am)|(pm)))/);
+    var a = firstWord.match(patt);
+  var res = patt.test(firstWord);
+  var c = patt.test(b);
+  var d = b.match(patt)
   return
 }
 

@@ -81,7 +81,23 @@ function ExportEvents_(settings) {
             var heading3 = processHeading3();
             break;
           }
-            // description
+            /* Heading 4 = event description paragraph NOT immediately followed by an event details paragraph.
+
+                Example:
+
+                Tuesday Morning Prayer Group | Room 123
+                Come to pray and to receive prayer.
+                Show less
+
+            
+            Heading 5 = 'event description paragraph' immediately followed by an 'event details paragraph' (Heading 6).
+
+                Example:
+
+                Midweek Hymns + Teaching | Prayer Tower
+                All are welcome to join our senior community for a service of hymn singing and biblical teaching from our pastoral staff.
+                >> Ongoing
+             */          
           case DocumentApp.ParagraphHeading.HEADING4:
           case DocumentApp.ParagraphHeading.HEADING5: {
             processHeading45();

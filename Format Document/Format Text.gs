@@ -1,142 +1,79 @@
 function formatDoc_() {
 
-  var DAY_ARRAY = [
-        'sunday',
-        'monday',
-        'tuesday',
-        'wednesday',
-        'thursday',
-        'friday',
-        'saturday',
-        'sunday'
-      ],
-      body = getDoc_().getBody(),
-      paras = body.getParagraphs();
+  var body = getDoc_().getBody();
+  var paragraphs = body.getParagraphs();
   
-  for (var i = 0; i < paras.length; i++) {
+  for (var i = 0; i < paragraphs.length; i++) {
   
-    //Get First Word Of Paragraph
-    var txt = paras[i].getText(),
-        para = txt.split(' '),
-        otherEvents = (para[0] + ' ' + para[1]).toLowerCase(),
-        firstWord = para[0].toLowerCase(),
-        patt = new RegExp(/([0-9]((\ ){0,1})((AM)|(PM)|(am)|(pm)))|([1-9]:[0-5][0-9]((\ ){0,1})((AM)|(PM)|(am)|(pm)))|(1[0-2]:[0-5][0-9]((\ ){0,1})((AM)|(PM)|(am)|(pm)))/),
-        res = patt.test(firstWord),     
-        isHeading1 = DAY_ARRAY.indexOf(firstWord); //First Condition Check If Word Exist In Day Array... Set Heading 1
-        
-    //ui.alert(para[1]);
-    //return;
-    if (isHeading1 != '-1' && para[1] == undefined) {
+    var paragraph = paragraphs[i];  
+    var txt = paragraph.getText();
+    var wordArray = txt.split(' ');
+    var firstWord = wordArray[0].toUpperCase();    
+    var firstTwoWords = (wordArray[0] + ' ' + wordArray[1]).toUpperCase();
+    var isFirstWordDayOfWeek = DAYS_OF_WEEK_.indexOf(firstWord) !== -1; 
+    var justASingleWord = (wordArray[1] == undefined)
+    var timeRegex = new RegExp(/([0-9]((\ ){0,1})((AM)|(PM)|(am)|(pm)))|([1-9]:[0-5][0-9]((\ ){0,1})((AM)|(PM)|(am)|(pm)))|(1[0-2]:[0-5][0-9]((\ ){0,1})((AM)|(PM)|(am)|(pm)))/);
+    var isTimeString = timeRegex.test(firstWord);
+    var style = {}
     
-      //Create Style For Day Name
-      var dayNameStyle = {};
-      
-      dayNameStyle[DocumentApp.Attribute.BOLD] = true;
-      dayNameStyle[DocumentApp.Attribute.FONT_SIZE] = 30;
-      dayNameStyle[DocumentApp.Attribute.ITALIC] = false;
-      dayNameStyle[DocumentApp.Attribute.FONT_FAMILY] = 'Lato';
-      
-      paras[i].setAttributes(dayNameStyle);
-      paras[i].setHeading(DocumentApp.ParagraphHeading.HEADING1);
-      
-    } else if (otherEvents == 'other events') {
+    var BOLD = true
+    var NOT_BOLD = false
     
-      //ui.alert(otherEvents);
-      
-      //Create Style For Day Name
-      var dayNameStyle = {};
-      
-      dayNameStyle[DocumentApp.Attribute.BOLD] = true;
-      dayNameStyle[DocumentApp.Attribute.FONT_SIZE] = 30;
-      dayNameStyle[DocumentApp.Attribute.ITALIC] = false;
-      dayNameStyle[DocumentApp.Attribute.FONT_FAMILY] = 'Lato';
-      
-      paras[i].setAttributes(dayNameStyle);
-      paras[i].setHeading(DocumentApp.ParagraphHeading.HEADING1);
-      
-    } else if (res) {
-    
-      //Second Check If Word Is Time... Heading 2
-      //Create Style For Day Name
-      var timeStyle = {};
-      
-      timeStyle[DocumentApp.Attribute.BOLD] = true;
-      timeStyle[DocumentApp.Attribute.FONT_SIZE] = 10;
-      timeStyle[DocumentApp.Attribute.ITALIC] = true;
-      timeStyle[DocumentApp.Attribute.FONT_FAMILY] = 'Lato';
-      
-      paras[i].setAttributes(timeStyle);
-      paras[i].setHeading(DocumentApp.ParagraphHeading.HEADING2);
-      
+    var ITALIC = true
+    var NOT_ITALIC = false
+
+    if ((justASingleWord && isFirstWordDayOfWeek) || (firstTwoWords === 'OTHER EVENTS')) {
+
+      // Day of week or "Other Events" title
+      setStyle(BOLD, 30, NOT_ITALIC, 'Lato', 'HEADING1')
+           
+    } else if (isTimeString) {
+
+      setStyle(BOLD, 10, ITALIC, 'Lato', 'HEADING2')
+
     } else {
     
-      //Third Check For heading 3 If string contain |
-      var c = txt.indexOf('|');
+      // Third Check For heading 3 If string contain |      
+      if (txt.indexOf('|') !== -1) {
       
-      if (c != -1) {
-        //Create Style For Day Name
-        var head3Style = {};
-        
-        head3Style[DocumentApp.Attribute.BOLD] = true;
-        head3Style[DocumentApp.Attribute.FONT_SIZE] = 10;
-        head3Style[DocumentApp.Attribute.FONT_FAMILY] = 'Lato';
-        
-        paras[i].setAttributes(head3Style);
-        paras[i].setHeading(DocumentApp.ParagraphHeading.HEADING3);
-        
+        // Event title
+        setStyle(BOLD, 10, NOT_ITALIC, 'Lato', 'HEADING3')
+      
       } else {
       
-        // Check Heading 4 if a paragraph does not contain ë|í  AND does not begin with '>>' AND the 
-        // immediate following paragraph does not start with '>>' = Header 4
+        var nextI = i + 1;
+
+        if ((firstWord.indexOf('>>') === -1) && (nextI < paragraphs.length)) {
         
-        //Check If not Begin with >>
-        var d = firstWord.indexOf('>>');
-        
-        if (d == '-1') {
-        
-          var nextI = i + 1;
+          // This paragraph does not begin with '>>' and there is one after that
           
-          if(nextI < paras.length) {
-            var nextParaText=paras[nextI].getText(),
-                nextParaFirst=nextParaText.split(' '),
-                nextParaFirstWord=nextParaFirst[0],
-                //Check If next para done not start with >> then heading 4
-                e = nextParaFirstWord.indexOf('>>');
+          var nextParaText = paragraphs[nextI].getText();          
+          var nextParaWords = nextParaText.split(' ');
+          var nextParaFirstWord = nextParaWords[0];
+          
+          if (nextParaFirstWord.indexOf('>>') === -1) {
+          
+            // Neither this or the next paragraph start with '>>', 
+            // so event description where event details DO NOT follow in the next line
+
+            setStyle(NOT_BOLD, 9.5, NOT_ITALIC, 'Lato', 'HEADING4')
             
-            if (e == '-1') {
-              var head4Style = {};
-              
-              head4Style[DocumentApp.Attribute.BOLD] = false;
-              head4Style[DocumentApp.Attribute.FONT_SIZE] = 9.50;
-              head4Style[DocumentApp.Attribute.FONT_FAMILY] = 'Lato';
-              
-              paras[i].setAttributes(head4Style);
-              paras[i].setHeading(DocumentApp.ParagraphHeading.HEADING4);
-            } else {
-              var head5Style = {};
-              
-              head5Style[DocumentApp.Attribute.BOLD] = false;
-              head5Style[DocumentApp.Attribute.FONT_SIZE] = 9.50;
-              head5Style[DocumentApp.Attribute.FONT_FAMILY] = 'Lato';
-              
-              paras[i].setAttributes(head5Style);
-              paras[i].setHeading(DocumentApp.ParagraphHeading.HEADING5);
-            }
+          } else {
+
+            // This paragraph does not start with '>>', but the next one does  
+            // so event description where event details DO  follow in the next line
+
+            setStyle(NOT_BOLD, 9.5, NOT_ITALIC, 'Lato', 'HEADING5')
           }
-        } else {
-          var head6Style = {};
           
-          head6Style[DocumentApp.Attribute.BOLD] = false;
-          head6Style[DocumentApp.Attribute.FONT_SIZE] = 9.50;
-          head6Style[DocumentApp.Attribute.ITALIC] = true;
-          head6Style[DocumentApp.Attribute.FONT_FAMILY] = 'Lato';
-          
-          paras[i].setAttributes(head6Style);
-          paras[i].setHeading(DocumentApp.ParagraphHeading.HEADING6);
+        } else { // Starts with '>>'
+
+          setStyle(NOT_BOLD, 9.5, ITALIC, 'Lato', 'HEADING6')
         }
       }
     }
-  }
+    
+  } // for each paragraph
   
   removeBlankParagraph();
   applyColorToText();
@@ -146,17 +83,29 @@ function formatDoc_() {
   
   // Private Functions
   // -----------------
+
+  function setStyle(bold, fontSize, italic, fontStyle, heading) {
   
+    var style = {};
+    style[DocumentApp.Attribute.BOLD] = bold;
+    style[DocumentApp.Attribute.FONT_SIZE] = fontSize;
+    style[DocumentApp.Attribute.ITALIC] = italic;
+    style[DocumentApp.Attribute.FONT_FAMILY] = fontStyle;
+      
+    paragraph.setAttributes(style);
+    paragraph.setHeading(DocumentApp.ParagraphHeading[heading]);
+  }
+
   function doubleSpaceToSingle() {
     body.replaceText("[ ]{2,}", " "); 
   }
   
   function removeBlankParagraph() {
-    var paras = body.getParagraphs();
-    for (var i = 0; i < paras.length; i++) {
-      if (paras[i].getText() === '') {
+    var paragraphs = body.getParagraphs();
+    for (var i = 0; i < paragraphs.length; i++) {
+      if (paragraphs[i].getText() === '') {
         try {
-          paras[i].removeFromParent();
+          paragraphs[i].removeFromParent();
         } catch (err) {}
       }
     }

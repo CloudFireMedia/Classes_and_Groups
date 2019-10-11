@@ -15,6 +15,27 @@ function getUi_() {
   return ui
 }
 
-function log(message) {
-  SpreadsheetApp.openById('1e4_oaaxoXfr2BWByopjzcdDvLPTyiG2GcCMM5H5OHFE').getSheetByName('Log').appendRow([new Date(), message])
+function getDateTimeFromDocTitle(title) {
+  var dateInTitleArray = title.match(/\[\s*(\d+)\.(\d+)\.(\d+)\s*\]/);
+  var date
+  
+  if (dateInTitleArray.length !== 4) {
+    return null
+  }
+  
+  var year = parseInt(datetime[1], 10);
+  var month = parseInt(datetime[2], 10);
+  var day = parseInt(datetime[3], 10);
+  
+  date = new Date(year, month - 1, day)
+    
+  return date
+}
+
+function logInit() {
+  return SpreadsheetApp.openById(LOG_SHEET_ID_).getSheetByName('Log')
+}
+
+function log(logSheet, message) {
+  logSheet.appendRow([new Date(), message])
 }

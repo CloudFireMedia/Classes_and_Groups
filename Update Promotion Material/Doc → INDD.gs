@@ -1,47 +1,49 @@
-// created by Mikhail K. on freelancer.com
-
-function ChooseSettingsFile_() {
-  var app = DocumentApp,
-      ui = app.getUi(),
-      result = ui.prompt(
-        'Do you want to use the settings file?',
-        "Please enter url of settings file. Sheet must be named 'Classroom Signage Quantities'",
+function chooseSettingsFile_() {
+  var app = DocumentApp;
+  var ui = app.getUi();
+  
+  var result = ui.prompt(
+        'Enter Settings file URL',
+          'Please enter the URL of settings file, or leave blank for ' + 
+          '1 copy for each location. Tab must be named "Classroom Signage Quantities"',
         ui.ButtonSet.OK_CANCEL
-      ),
-      button = result.getSelectedButton(),
-      url = result.getResponseText().trim();
+      );
+      
+  var button = result.getSelectedButton();
   
-  switch (button) {
-    case ui.Button.OK: {
-      try {
-        var spreadsheet = SpreadsheetApp.openByUrl(url),
-            sheet = spreadsheet.getSheetByName('Classroom Signage Quantities'),
-            range = sheet.getDataRange(),
-            values = range.getValues(),
-            settings = {};
-        
-        for (var i = 1; i < values.length; i++) {
-          var location = typeof(values[i][0]) == 'number' ? 'Room ' + values[i][0] : values[i][0].trim(),
-            copies = values[i][1];
-          
-          settings[location] = copies;
-        }
-        
-        ConvertToJson(settings);
-      } catch (err) {
-        ui.alert(err.message);
-      }
-      
-      break;
-    }
-    case ui.Button.CANCEL:
-    case ui.Button.CLOSE: {
-      ConvertToJson();
-      
-      break;
-    }
+  if (button !== ui.Button.OK) {
+    return;
   }
+
+  var url = result.getResponseText().trim();
+  var settings = null;
+
+  try {
   
+    if (url !== '') { 
+      
+      // Get the quantities for each room from the settings file
+      
+      var spreadsheet = SpreadsheetApp.openByUrl(url);
+      var sheet = spreadsheet.getSheetByName('Classroom Signage Quantities');
+      var range = sheet.getDataRange();
+      var values = range.getValues();
+      var settings = {};
+      
+      for (var i = 1; i < values.length; i++) {
+        var location = (typeof(values[i][0]) === 'number') ? 'Room ' + values[i][0] : values[i][0].trim();
+        var copies = values[i][1];
+        
+        settings[location] = copies;
+      }
+    }
+    
+    ConvertToJson(settings);
+    
+  } catch (err) {
+    ui.alert(err.message);
+  }
+    
   return;
   
   // Private Functions
@@ -49,40 +51,41 @@ function ChooseSettingsFile_() {
   
   function ConvertToJson(settings) {
   
-    var app = DocumentApp,
-        ui = app.getUi(),
-        doc = app.getActiveDocument(),
-        body = doc.getBody(),
-        paragraphs = body.getParagraphs(),
-        filename = doc.getName().split('.')[0] + '.json',
-          data = {},
-            result = {},
-              day, time, location, title;
+    var app = DocumentApp;
+    var ui = app.getUi();
+    var doc = app.getActiveDocument();
+    var body = doc.getBody();
+    var paragraphs = body.getParagraphs();
+    var filename = doc.getName().split('.')[0] + '.json';
+    var data = {};
+    var result = {};
+    var day;
+    var time;
+    var location;
+    var title;
     
-    if (settings == null) {
+    if (settings === null) {
       settings = {};
     }
     
     for (var i=0; i < paragraphs.length; i++) {
-      var paragraph = paragraphs[i],
-          text = paragraph.getText().trim(),
-          heading = paragraph.getHeading();
+      var paragraph = paragraphs[i];
+      var text = paragraph.getText().trim();
+      var heading = paragraph.getHeading();
       
-      if (text.toUpperCase() == 'OTHER EVENTS') {
+      if (text.toUpperCase() === 'OTHER EVENTS') {
         break;
       }
       
       switch (heading) {
           // day of the week
         case DocumentApp.ParagraphHeading.HEADING1: {
-          day = text;
-          
+          day = text;          
           break;
         }
           // time
         case DocumentApp.ParagraphHeading.HEADING2: {
-          time = text;
-          
+          time = text;          
           break;
         }
           // title & location
@@ -93,32 +96,30 @@ function ChooseSettingsFile_() {
             switch (header.length) {
               case 2: {
                 title = header[0].trim();
-                location = header[1].trim();
-                
+                location = header[1].trim();                
                 break;
               }
               case 3: {
                 title = header[0].trim();
                 location = header[2].trim();
-                
                 break;
               }
             }
             
-            if (data[location] == null) {
+            if (!data.hasOwnProperty(location)) {
               data[location] = {
                 'events': {},
                 'copies': 1
               };
               
               for (var room in settings) {
-                if (location.toUpperCase() == room.toUpperCase()) {
+                if (location.toUpperCase() === room.toUpperCase()) {
                   data[location].copies = settings[room];
                 }
               }
             }
             
-            if (data[location].events[day] == null) {
+            if (!data[location].events.hasOwnProperty(day)) {
               data[location].events[day] = [];
             }
             
@@ -131,9 +132,7 @@ function ChooseSettingsFile_() {
           break;
         }
           // description
-        case DocumentApp.ParagraphHeading.HEADING4: {
-          //
-          
+        case DocumentApp.ParagraphHeading.HEADING4: {          
           break;
         }
       }
@@ -147,18 +146,18 @@ function ChooseSettingsFile_() {
       }
     }
     
-    if (Object.keys(settings).length == 0) {
+    if (Object.keys(settings).length === 0) {
       for (var location in data) {
-        if (result[location] == null) {
+        if (!result.hasOwnProperty(location)) {
           result[location] = data[location];
         }
       }
     }
+
+    var content = JSON.stringify(result);
+    var file = DriveApp.createFile(filename, content, MimeType.JAVASCRIPT);
     
-    var content = JSON.stringify(result),
-        file = DriveApp.createFile(filename, content, MimeType.JAVASCRIPT);
-    
-    ui.alert('File \"' + file.getName() + '\" saved in your google drive.');
+    ui.alert('File "' + file.getName() + '" saved in your google drive.');
   }
 
 } // ConvertToJson()

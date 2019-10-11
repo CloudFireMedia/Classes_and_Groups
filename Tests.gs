@@ -1,11 +1,7 @@
 function test_misc() {
-  var firstWord = "9:00am – 10:00am"
-  var b = "9:00am"
-    var patt = new RegExp(/([0-9]((\ ){0,1})((AM)|(PM)|(am)|(pm)))|([1-9]:[0-5][0-9]((\ ){0,1})((AM)|(PM)|(am)|(pm)))|(1[0-2]:[0-5][0-9]((\ ){0,1})((AM)|(PM)|(am)|(pm)))/);
-    var a = firstWord.match(patt);
-  var res = patt.test(firstWord);
-  var c = patt.test(b);
-  var d = b.match(patt)
+  var timeZone = Session.getScriptTimeZone()
+  var date = new Date(2019,1,1)
+  var dateTitle = Utilities.formatDate(date, timeZone, '[ yyyy.MM.dd ]')
   return
 }
 

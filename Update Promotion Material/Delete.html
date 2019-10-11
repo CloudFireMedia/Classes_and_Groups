@@ -120,7 +120,7 @@
 			<div class="row">
 				<label for="calendar_name">Name of the Calendar</label>
 				<select id="calendar_name" name="calendar_name[]">
-					<? for (var index in content.calendars) { ?>
+					<?for (var index in content.calendars) { ?>
 					<option><?= content.calendars[index] ?></option>
 					<? } ?>
 				</select>
@@ -189,7 +189,7 @@
 				google.script.run
 					.withFailureHandler(onDeleteFailure)
 					.withSuccessHandler(onDeleteSuccess)
-					.DeleteEvents(values['calendar_name']);
+					.deleteEvents(values['calendar_name']);
 			});
 
 			$('#settings').on('submit', function(e) {

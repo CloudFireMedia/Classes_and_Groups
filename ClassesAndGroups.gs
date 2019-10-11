@@ -4,11 +4,14 @@
 // Menu Items
 function instructionsDialogueBox() 		{instructionsDialogueBox_();}
 function formatDoc() 					{formatDoc_();}
-function ShowDeletePopup() 				{ShowDeletePopup_();}
-function ShowExportPopup() 				{ShowExportPopup_();}
-function ChooseSettingsFile() 			{ChooseSettingsFile_();}
-function SetTrigger() 					{SetTrigger_();}
+function showDeletePopup() 				{showDeletePopup_();}
+function showExportPopup() 				{showExportPopup_();}
+function chooseSettingsFile() 			{chooseSettingsFile_();}
+function setTrigger() 					{setTrigger_();}
+
+// Triggers
+function changeFilename()               {changeFilename_();}
 
 // Client-side 
-function DeleteEvents(calendars_names) 	{DeleteEvents_(calendars_names);}
-function ExportEvents(settings) 		{ExportEvents_(settings);}
+function deleteEvents(calendarsNames) 	{deleteEvents_(calendarsNames);}
+function exportEvents(settings) 		{exportEvents_(settings);}

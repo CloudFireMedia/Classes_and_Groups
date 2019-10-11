@@ -1,5 +1,7 @@
 function formatDoc_() {
 
+// DocumentApp.getActiveDocument().getBlob().getDataAsString().getBytes()
+
   var body = getDoc_().getBody();
   var paragraphs = body.getParagraphs();
   
@@ -33,7 +35,6 @@ function formatDoc_() {
 
     } else {
     
-      // Third Check For heading 3 If string contain |      
       if (txt.indexOf('|') !== -1) {
       
         // Event title
@@ -78,6 +79,7 @@ function formatDoc_() {
   removeBlankParagraph();
   applyColorToText();
   doubleSpaceToSingle();
+  updateDashes();
   
   return;
   
@@ -102,33 +104,54 @@ function formatDoc_() {
   
   function removeBlankParagraph() {
     var paragraphs = body.getParagraphs();
-    for (var i = 0; i < paragraphs.length; i++) {
+    var numberOfParagraphs = paragraphs.length
+    for (var i = 0; i < numberOfParagraphs; i++) {
       if (paragraphs[i].getText() === '') {
-        try {
+        if (i < (numberOfParagraphs - 1)) {
           paragraphs[i].removeFromParent();
-        } catch (err) {}
+        }
       }
     }
   }  
 
-  // Apply red color to "NEW!"
+  // Apply red color to "NEW! or "New!", or any variation of case
   function applyColorToText() {
-    var startTag = 'NE',
-        endTag = '!',
-        para = body.getParagraphs(),
-        highlightStyle = {};
-    
+    var endTag = '!';
+    var para = body.getParagraphs();
+    var highlightStyle = {}; 
     highlightStyle[DocumentApp.Attribute.FOREGROUND_COLOR] = '#FF0000';
     
-    for (var i = 0; i < para.length; i++) {
-      var text = para[i].editAsText().getText(),
-          from = para[i].findText(startTag),
-          to = para[i].findText(endTag, from);
+    highlightText('NEW');
+    highlightText('New');
+    highlightText('new');
+    
+    body.replaceText("New!", "NEW!");
+    body.replaceText("new!", "NEW!");
+    
+    return
+    
+    // Private Functions
+    // -----------------
+    
+    function highlightText(startTag) {
+      for (var i = 0; i < para.length; i++) {
+        var nextPara = para[i];
+        var from = nextPara.findText(startTag);
+        var to = nextPara.findText(endTag, from);
+        var text = nextPara.editAsText();
+        
+        if ((to != null && from != null) && (to.getStartOffset() > 0)) {
+          text.setAttributes(from.getStartOffset(), to.getStartOffset(), highlightStyle);
+        }        
+      }    
       
-      if ((to != null && from != null) && (to.getStartOffset() > 0)) {
-        para[i].editAsText().setAttributes(from.getStartOffset(), to.getStartOffset(), highlightStyle);
-      }
-    }
+    } // formatDoc_.applyColorToText.highlightText()
+    
+  } // formatDoc_.applyColorToText()
+  
+  function updateDashes() {
+    body.replaceText("-", "–"); // hyphen -> en dash 
+    body.replaceText("—", "–"); // em dash -> en dash 
   }
 
 } // formatDoc_()

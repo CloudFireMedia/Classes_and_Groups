@@ -1,4 +1,4 @@
-function ShowExportPopup_() {
+function showExportPopup_() {
 
   var ui = DocumentApp.getUi(),
       tmpl = HtmlService.createTemplateFromFile('Update Promotion Material/Export.html'),
@@ -19,7 +19,7 @@ function ShowExportPopup_() {
   ui.showModalDialog(html, 'Export settings');
 }
 
-function ExportEvents_(settings) {
+function exportEvents_(settings) {
 
   var regularEventsCalendars = CalendarApp.getCalendarsByName(settings.regular_events_calendar);
   var newEventsCalendars     = CalendarApp.getCalendarsByName(settings.new_events_calendar);
@@ -145,7 +145,7 @@ function ExportEvents_(settings) {
       
       eventHeadingDay = text.toLowerCase().trim();
       
-    } // ExportEvents_.ParseEvents.processDailyEvents.processHeading1
+    } // exportEvents_.ParseEvents.processDailyEvents.processHeading1
     
     function processHeading2(text) {
       
@@ -174,7 +174,7 @@ function ExportEvents_(settings) {
       
       return timeFrame;
       
-    } // ExportEvents_.ParseEvents.processDailyEvents.processHeading2
+    } // exportEvents_.ParseEvents.processDailyEvents.processHeading2
     
     function processHeading3() {
       
@@ -202,7 +202,7 @@ function ExportEvents_(settings) {
         location: location
       }
       
-    } // ExportEvents_.ParseEvents.processDailyEvents.processHeading3
+    } // exportEvents_.ParseEvents.processDailyEvents.processHeading3
     
     function processHeading45() {
       
@@ -293,9 +293,9 @@ function ExportEvents_(settings) {
           };
         }
 
-      } // ExportEvents_.ParseEvents.processDailyEvents.processHeading45.processHeading6
+      } // exportEvents_.ParseEvents.processDailyEvents.processHeading45.processHeading6
 
-    } // ExportEvents_.ParseEvents.processDailyEvents.processHeading45
+    } // exportEvents_.ParseEvents.processDailyEvents.processHeading45
 
     function to24Hours(hours, period) {
       if (period == 'AM' && hours == 12) {
@@ -305,7 +305,7 @@ function ExportEvents_(settings) {
       }
       return hours;
       
-    } // ExportEvents_.ParseEvents.to24Hours()
+    } // exportEvents_.ParseEvents.to24Hours()
 
     function processOtherEvents() {
       
@@ -427,11 +427,11 @@ function ExportEvents_(settings) {
           throw new Error('No dates assigned for "other events"')
         }
         
-      } // ExportEvents_.ParseEvents.processOtherEvents.processHeading45()
+      } // exportEvents_.ParseEvents.processOtherEvents.processHeading45()
             
-    } // ExportEvents_.ParseEvents.processOtherEvents()
+    } // exportEvents_.ParseEvents.processOtherEvents()
 
-  } // ExportEvents_.ParseEvents()
+  } // exportEvents_.ParseEvents()
 
   function AddEventsToCalendar(regularEventsCalendar, newEventsCalendar, data) {
   
@@ -515,7 +515,7 @@ function ExportEvents_(settings) {
       
     } // for each event
     
-  } // ExportEvents_.AddEventsToCalendar()
+  } // exportEvents_.AddEventsToCalendar()
   
   function ExcludeEvents(calendars, exclusion_dates) {
     for (var index in exclusion_dates) {
@@ -530,12 +530,12 @@ function ExportEvents_(settings) {
       }
     }
     
-  } // ExportEvents_.ExcludeEvents()
+  } // exportEvents_.ExcludeEvents()
   
   function GetExclusionDates(url) {
   
     var ss = Config.get('PROMOTION_DEADLINES_CALENDAR_ID');
-    var sheet = ss.getSheetByName(Config.get('BLACKOUT_DATES_DATA_SHEET_NAME'));
+    var sheet = ss.getSheetByName('Calendar Exceptions');
     var ranges = sheet.getRangeList(['A6:A', 'D5:D', 'H5:S']).getRanges();
     var titles = ranges[0].getValues();
     var values = ranges[1].getValues();
@@ -609,8 +609,8 @@ function ExportEvents_(settings) {
       }  
       return false;
       
-    } // ExportEvents_.GetExclusionDates.isInArray()
+    } // exportEvents_.GetExclusionDates.isInArray()
     
-  } // ExportEvents_.GetExclusionDates()
+  } // exportEvents_.GetExclusionDates()
       
-} // ExportEvents_()
+} // exportEvents_()

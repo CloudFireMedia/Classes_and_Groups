@@ -193,7 +193,7 @@
 				google.script.run
 					.withFailureHandler(onParseFailure)
 					.withSuccessHandler(onParseSuccess)
-					.ExportEvents(values);
+					.exportEvents(values);
 			});
 
 			$('#settings').on('submit', function(e) {

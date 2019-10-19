@@ -1,26 +1,22 @@
 /**
- * Create a trigger to update the C&B filename to run at the date 
+ * Create a trigger to update the C&G filename to run at the date 
  * in the doc title
  */
 
 function setTrigger_() {
-
-  var logSheet = logInit()
   var doc = getDoc_();
   var title = doc.getName();
-  date = getDateTimeFromDocTitle(title);
+  var date = getDateTimeFromDocTitle_(title);
     
-  if (date === null) {
-    log(logSheet,'Failed to find date in "' + title + '"');
+  if (date === null) {  
+    alert_('Failed to create trigger', 'No date in doc title "' + title + '"')
     return;
   }  
-    
-  ScriptApp.newTrigger('changeFilename')
-    .timeBased()
-    .atDate(date.getYear(), date.getMonth() + 1, date.getDate())
-    .create();
-  
-  log(logSheet, 'Started new "changeFilename()" trigger for "' + title + '"');
+
+  createChangeFilenameTrigger_(
+    date.getYear(), 
+    date.getMonth() + 1, 
+    date.getDate());
   
 } // setTrigger_()
 
@@ -31,16 +27,18 @@ function setTrigger_() {
  */
 
 function changeFilename_() {
-
-  var doc = DocumentApp.openById(Config.get('CLASSES_AND_GROUPS_DOCUMENT_ID'))
-  var docTitle = doc.getName()
-  var dateOnPresentDoc = getDateTimeFromDocTitle(title);
+  var logSheet = logInit_()
+  var doc = DocumentApp.openById(Config.get('CLASSES_AND_GROUPS_DOCUMENT_ID'));
+  var docTitle = doc.getName();
+  var dateOnPresentDoc = getDateTimeFromDocTitle_(docTitle);
   
-  var ss = SpreadsheetApp.openById(Config.get('PROMOTION_DEADLINES_CALENDAR_SPREADSHEET_ID'));
+  var ss = SpreadsheetApp.openById(Config.get('PROMOTION_DEADLINES_CALENDAR_ID'));
   var sheet = ss.getSheetByName('Communications Director Master');
   var ranges = sheet.getRangeList(['D4:D', 'E4:E']).getRanges();
   var dates = ranges[0].getValues();
   var titles = ranges[1].getValues();
+  
+  var id;
   
   var foundNewDoc = false
   
@@ -52,46 +50,104 @@ function changeFilename_() {
     // Look at future date for the new C&G GDoc
     
     if (date > dateOnPresentDoc && 
-        title.indexOf('Christ Church Communities') !== -1 && 
+        title.indexOf('Christ Church Communities (C3)') !== -1 && 
         title.indexOf('Classes + Groups') !== -1) {
       var doc = DocumentApp.openById(Config.get('CLASSES_AND_GROUPS_DOCUMENT_ID'));      
-      var timeZone = Session.getScriptTimeZone()
-      var dateTitle = Utilities.formatDate(date, timeZone, '[ yyyy.MM.dd ]')
+      var timeZone = Session.getScriptTimeZone();
+      var dateTitle = Utilities.formatDate(date, timeZone, '[ yyyy.MM.dd ]');
+      
+      // [ 2020.01.05 ] Christ Church Communities (C3) Winter Classes + Groups_Booklet
+      
+      var title = 
+        dateTitle + ' ' + 
+        'Christ Church Communities (C3) ' + 
+        getSeason(date.getMonth()) + ' ' + // zero-index
+        'Classes + Groups_Booklet'
+      
       doc.setName(title);
+      log_(logSheet, 'Renamed GDoc to "' + title + '"');
       
-      // Delete the daily trigger
-      ScriptApp.getProjectTriggers().forEach(function(trigger) {
-        if (trigger.getHandlerFunction() === 'changeFilename') {
-          var id = trigger.getUniqueId()
-          ScriptApp.deleteTrigger(trigger)
-          log(logSheet, 'Deleted daily "changeFilename()" trigger ' + id);
-        }
-      })
-      
-      // Set a trigger for when this doc expires
-      var trigger = ScriptApp.newTrigger('changeFilename')
-        .timeBased()
-        .atDate(date.getYear(), date.getMonth() + 1, date.getDate())
-        .create();
-
-      var id = trigger.getUniqueId()
-      log(logSheet, 'Created new "changeFilename()" trigger ' + id + ' for ' + date);
+      createChangeFilenameTrigger_(
+        date.getYear(), 
+        date.getMonth() + 1, 
+        date.getDate());
+        
       foundNewDoc = true;
     }
     
   } // for each row in PDC
   
-  if (!foundNewDoc) {
+  if (!foundNewDoc) {  
   
     // Look again tomorrow
+    var today = new Date();
     
-    var today = new Date()
-    var tomorrow = new Date(today.getYear(), today.getMonth(), today.getDate() + 1)
-    
-    ScriptApp.newTrigger('changeFilename')
-      .timeBased()
-      .atDate(tomorrow.getYear(), tomorrow.getMonth() + 1, tomorrow.getDate())
-      .create();      
+    createChangeFilenameTrigger_(
+      today.getYear(), 
+      today.getMonth() + 1, 
+      today.getDate() + 1);
   }
   
-} // changeFilename()
+  return
+  
+  // Private Functions
+  // -----------------
+  
+  function getSeason(month) {
+    var season
+    
+    if (month === 11) {
+      season = 'Winter';
+    } else if (month >= 0 && month < 2) {
+      season = 'Winter';     
+    } else if (month >= 2 && month < 5) {
+      season = 'Spring';
+    } else if (month >= 5 && month < 8) {
+      season = 'Summer';
+    } else if (month >= 8 && month < 11) {
+      season = 'Fall';
+    } else {
+      throw new Error('Invalid month')
+    }
+
+    return season;
+  }
+  
+} // changeFilename_()
+
+function createChangeFilenameTrigger_(year, month, dayOfMonth) {
+
+  var logSheet = logInit_();
+  log_(logSheet, year + '-' + month + '-' + dayOfMonth)
+
+  deleteExistingChangeFilenameTriggers_()  ;  
+ 
+  // Create a new one
+  var id = ScriptApp.newTrigger('changeFilename')
+    .timeBased()
+    .atDate(year, month, dayOfMonth)
+    .create()
+    .getUniqueId();
+  
+  var triggerDate = new Date(year, month - 1, dayOfMonth);
+    
+  alert_(
+    'Created new trigger', 
+    'New "changeFilename()" trigger ' + id + ' set for ' + triggerDate);
+    
+  // Private Functions
+  // -----------------
+  
+  function deleteExistingChangeFilenameTriggers_() {  
+    var logSheet = logInit_()
+    ScriptApp.getProjectTriggers().forEach(function(trigger) {
+      if (trigger.getHandlerFunction() === 'changeFilename') {
+        var id = trigger.getUniqueId()
+        ScriptApp.deleteTrigger(trigger)
+        log_(logSheet, 'Deleted "changeFilename()" trigger ' + id);
+      }
+    }) 
+    
+  } // createChangeFilenameTrigger_.deleteExistingChangeFilenameTriggers_()
+  
+} // createChangeFilenameTrigger_()

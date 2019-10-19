@@ -19,8 +19,8 @@ function showDeletePopup_() {
 
 function deleteEvents_(calendarNames) {
 
-  var logSheet = logInit()
-  log(logSheet, JSON.stringify(calendarNames))
+  var logSheet = logInit_()
+  log_(logSheet, JSON.stringify(calendarNames))
 
   var doc = getDoc_();
   var title = doc.getName();
@@ -58,7 +58,7 @@ function deleteEvents_(calendarNames) {
       deleteEvents(events);  
       Utilities.sleep(1000);
       var events = calendars[0].getEvents(start, end);  
-      log(logSheet, 'loop count: ' + loopCount++);
+      log_(logSheet, 'loop count: ' + loopCount++);
               
     } // while still events 
     
@@ -77,10 +77,10 @@ function deleteEvents_(calendarNames) {
 
       if (event.isRecurringEvent()) {
         event.getEventSeries().deleteEventSeries();
-        log(logSheet, 'Deleted event series"' + name + '"')        
+        log_(logSheet, 'Deleted event series"' + name + '"')        
       } else {
         event.deleteEvent();
-        log(logSheet, 'Deleted event"' + name + '"')
+        log_(logSheet, 'Deleted event"' + name + '"')
       }    
     })
     

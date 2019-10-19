@@ -1,6 +1,8 @@
 function formatDoc_() {
 
-// DocumentApp.getActiveDocument().getBlob().getDataAsString().getBytes()
+// DocumentApp.getActiveDocument().getBody().getParagraphs()[0].getText().editAsText().setText(text)
+
+  var logSheet = logInit_();
 
   var body = getDoc_().getBody();
   var paragraphs = body.getParagraphs();
@@ -27,18 +29,20 @@ function formatDoc_() {
     if ((justASingleWord && isFirstWordDayOfWeek) || (firstTwoWords === 'OTHER EVENTS')) {
 
       // Day of week or "Other Events" title
-      setStyle(BOLD, 30, NOT_ITALIC, 'Lato', 'HEADING1')
+      setStyle(BOLD, 30, NOT_ITALIC, 'Lato', 'HEADING1');
            
     } else if (isTimeString) {
 
-      setStyle(BOLD, 10, ITALIC, 'Lato', 'HEADING2')
+      setStyle(BOLD, 10, ITALIC, 'Lato', 'HEADING2');
 
     } else {
     
       if (txt.indexOf('|') !== -1) {
       
         // Event title
-        setStyle(BOLD, 10, NOT_ITALIC, 'Lato', 'HEADING3')
+        setStyle(BOLD, 10, NOT_ITALIC, 'Lato', 'HEADING3');        
+        var toTitleCase = toTitleCase_(txt);
+        paragraph.editAsText().setText(toTitleCase);
       
       } else {
       
@@ -67,6 +71,9 @@ function formatDoc_() {
             setStyle(NOT_BOLD, 9.5, NOT_ITALIC, 'Lato', 'HEADING5')
           }
           
+          var toSentenceCase = toSentenceCase_(txt);
+          paragraph.editAsText().setText(toSentenceCase);
+                    
         } else { // Starts with '>>'
 
           setStyle(NOT_BOLD, 9.5, ITALIC, 'Lato', 'HEADING6')

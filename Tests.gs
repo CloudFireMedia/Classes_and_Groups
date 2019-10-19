@@ -1,7 +1,23 @@
 function test_misc() {
-  var timeZone = Session.getScriptTimeZone()
-  var date = new Date(2019,1,1)
-  var dateTitle = Utilities.formatDate(date, timeZone, '[ yyyy.MM.dd ]')
+  return
+}
+
+function test_download() {
+  var file = DriveApp.getFileById('1MgQ55qb1_IeEsl04rjFvQr3tDy9CD0WE')
+  var response = UrlFetchApp.fetch(file.getDownloadUrl(),{headers: {Authorization: "Bearer " + ScriptApp.getOAuthToken()}});
+  var a = response.getContentText();
+  return;  
+}
+
+function test_toTitleCase() {
+  var a = 'a short title example of a giraffe'
+  var b = toTitleCase_(a)
+  return
+}
+
+function test_toSentenceCase() {
+  var a = 'a short title example of a giraffe'
+  var b = toSentenceCase_(a)
   return
 }
 
@@ -34,4 +50,10 @@ function test_deleteAllEvents() {
 //  .getEvents(startTime, endTime, options).getEvents(startTime, endTime).forEach(function(event) {
 //    event.deleteEvent()
 //  })
+}
+
+function test_getSeason() {
+  for (var i = 0; i < 12; i++) {
+    Logger.log(getSeason(i))
+  }
 }

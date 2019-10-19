@@ -56,7 +56,7 @@ function chooseSettingsFile_() {
     var doc = app.getActiveDocument();
     var body = doc.getBody();
     var paragraphs = body.getParagraphs();
-    var filename = doc.getName().split('.')[0] + '.json';
+    var filename = doc.getName().split('.')[0].slice(2) + '.json'; // Expecting "[ YYYYY.MM.dd ] ..."
     var data = {};
     var result = {};
     var day;
@@ -154,10 +154,17 @@ function chooseSettingsFile_() {
       }
     }
 
+    var DOWNLOAD_URL_ = 'https://script.google.com/macros/s/AKfycbwVM_JC2j5XDxVS9Z7Ghjw0yxFisD4iTme9GLUGHS6FpCecmHI/exec'
+
     var content = JSON.stringify(result);
     var file = DriveApp.createFile(filename, content, MimeType.JAVASCRIPT);
     
-    ui.alert('File "' + file.getName() + '" saved in your google drive.');
+    openWindow_(DOWNLOAD_URL_ + '?id=' + file.getId())
+    
+//    var userInterface = HtmlService.createHtmlOutput(
+//      '<p>File <a href="' + file.getDownloadUrl() + '">' + filename + '</a> saved in your google drive.</p>');
+//    
+//    ui.showModalDialog(userInterface, 'Download INDD file')
   }
 
 } // ConvertToJson()

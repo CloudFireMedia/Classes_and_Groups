@@ -26,8 +26,12 @@ function getDateTimeFromDocTitle_(title) {
   var month = parseInt(dateInTitleArray[2], 10);
   var day = parseInt(dateInTitleArray[3], 10);
   
-  var date = new Date(year, month - 1, day);
-    
+  // Check for NaN
+  if (year !== year || month !== month || day !== day) {
+    throw new Error('Bad date in "' + title + '"');
+  }
+  
+  var date = new Date(year, month - 1, day);    
   return date
 }
 
@@ -120,3 +124,23 @@ function openWindow_(url) {
           
   DocumentApp.getUi().showModalDialog(html, 'Downloading file, please wait....')
 } 
+
+function to24Hours_(hours, period) {
+  if (period == 'AM' && hours == 12) {
+    hours = 0;
+  } else if (period == 'PM' && hours < 12) {
+    hours = hours + 12;
+  }
+  return hours;
+  
+} // to24Hours_()
+
+function isInArray_(arr, obj) {
+  for (var i = 0; i < arr.length; i++) {
+    if (+arr[i] === +obj) {
+      return true;
+    }
+  }  
+  return false;
+  
+} // isInArray_()

@@ -7,11 +7,9 @@ function formatDoc_() {
   var body = getDoc_().getBody();
   var paragraphs = body.getParagraphs();
   
-  for (var i = 0; i < paragraphs.length; i++) {
-  
-    var paragraph = paragraphs[i];  
-    var txt = paragraph.getText();
-    var wordArray = txt.split(' ');
+  paragraphs.forEach(function(paragraph) {
+    var text = paragraph.getText();
+    var wordArray = text.split(' ');
     var firstWord = wordArray[0].toUpperCase();    
     var firstTwoWords = (wordArray[0] + ' ' + wordArray[1]).toUpperCase();
     var isFirstWordDayOfWeek = DAYS_OF_WEEK_.indexOf(firstWord) !== -1; 
@@ -30,6 +28,7 @@ function formatDoc_() {
 
       // Day of week or "Other Events" title
       setStyle(BOLD, 30, NOT_ITALIC, 'Lato', 'HEADING1');
+      paragraph.editAsText().setText(text.toUpperCase());
            
     } else if (isTimeString) {
 
@@ -37,11 +36,11 @@ function formatDoc_() {
 
     } else {
     
-      if (txt.indexOf('|') !== -1) {
+      if (text.indexOf('|') !== -1) {
       
         // Event title
         setStyle(BOLD, 10, NOT_ITALIC, 'Lato', 'HEADING3');        
-        var toTitleCase = toTitleCase_(txt);
+        var toTitleCase = toTitleCase_(text);
         paragraph.editAsText().setText(toTitleCase);
       
       } else {
@@ -71,7 +70,7 @@ function formatDoc_() {
             setStyle(NOT_BOLD, 9.5, NOT_ITALIC, 'Lato', 'HEADING5')
           }
           
-          var toSentenceCase = toSentenceCase_(txt);
+          var toSentenceCase = toSentenceCase_(text);
           paragraph.editAsText().setText(toSentenceCase);
                     
         } else { // Starts with '>>'
@@ -81,7 +80,7 @@ function formatDoc_() {
       }
     }
     
-  } // for each paragraph
+  }) // for each paragraph
   
   removeBlankParagraph();
   applyColorToText();

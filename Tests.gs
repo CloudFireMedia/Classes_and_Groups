@@ -1,4 +1,9 @@
 function test_misc() {
+  var a = new Date()
+  var b = a.setDate(a.getDate() + 1)
+  if (b > a) {
+    throw 'STOP'
+  }
   return
 }
 
@@ -21,14 +26,13 @@ function test_toSentenceCase() {
   return
 }
 
-function test_ExportEvents() {
+function test_exportEvents() {
   var settings = {
     populate_days:           ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"], 
     new_events_calendar:     "andrew@cloudfire.media", 
     regular_events_calendar: "andrew@cloudfire.media"
   }
-
-  ExportEvents_(settings)
+  exportEvents_(settings)
 }
 
 function test_formatDoc() {

@@ -43,14 +43,22 @@ function exportEvents_(settings) {
     
   var newEventsCalendar =   newEventsCalendars[0]
     
-  var events = parseEvents();    
+  var events = parseEvents();
+
+return
+
   var exclusionDates = getExclusionDates(); 
   addEventsToCalendar();
   excludeEvents([regularEventsCalendar, newEventsCalendar]);  
+  log_(logSheet, 'Finished exporting calendar events');
   return;
   
   // Private Functions
   // -----------------
+  
+  /**
+   * Convert the C&G GDoc into an array of GCal event objects
+   */
   
   function parseEvents() {
   
@@ -58,6 +66,7 @@ function exportEvents_(settings) {
     var ui = getUi_();
     var doc = getDoc_();    
     var docDate = getDateTimeFromDocTitle_(doc.getName());
+    docDate = checkDocDateIsASunday();
     var body = doc.getBody();
     var paragraphs = body.getParagraphs();
     
@@ -136,7 +145,27 @@ function exportEvents_(settings) {
       
       // Private Functions
       // -----------------
+
+      /**
+       * If the start date in the script is not a Sunday, the script should 
+       * take the first upcoming Sunday as the start date for populating 
+       * events on Calendar.
+       */
+       
+      function checkDocDateIsASunday() {
+        var newDocDate = docDate       
+        var day = newDocDate.getDay()
+        var offset = 0
+        while (day !== 0) {
+          offset++
+          var newDocDate = new Date(docDate.getYear(), docDate.getMonth(), docDate.getDate() + offset)
+          day = newDocDate.getDay()
+        }
+        log_(logSheet, 'Updated docDate to ' + newDocDate)
+        return newDocDate
       
+      } // exportEvents_.parseEvents.checkDocDateIsASunday()
+
       /**
        * If this is the second or more time that a heading has been found
        * inc the date this class is happening on
@@ -433,6 +462,7 @@ function exportEvents_(settings) {
   } // exportEvents_.parseEvents()
 
   function addEventsToCalendar() {
+    var logSheet = logInit_();
   
     for (var index in events) {
     
@@ -476,7 +506,9 @@ function exportEvents_(settings) {
             recurrence,
             options
           );
-          
+
+          log('Created monthly event series "' + event.title + '"');
+
           break;
         }
         case 'WEEKLY': {
@@ -494,6 +526,8 @@ function exportEvents_(settings) {
             options
           );
           
+          log('Created weekly event series "' + event.title + '"');
+          
           break;
         }
         case 'ONCE': {
@@ -503,7 +537,9 @@ function exportEvents_(settings) {
             event.dates.end,
             options
           );
-          
+
+          log('Created one off event "' + event.title + '"');
+
           break;
         }
         default: {
@@ -514,21 +550,31 @@ function exportEvents_(settings) {
       
     } // for each event
     
+    // Private Functions
+    // -----------------
+    
+    function log(message) {
+      log_(logSheet, message);
+    }
+    
   } // exportEvents_.addEventsToCalendar()
   
   function getExclusionDates() {
     var doc = getDoc_();    
     var docDate = getDateTimeFromDocTitle_(doc.getName());
+    var docYear = docDate.getYear()
     
-    if (docDate.getYear() !== 2019) {
-      throw new Error('"Exclude dates" only support 2019 at the moment');
+    if (docYear !== 2019 && docYear !== 2020) {
+      throw new Error('"Exclude dates" only support 2019 and 2020 at the moment');
     }
-    
+            
     var ss = SpreadsheetApp.openById(Config.get('PROMOTION_DEADLINES_CALENDAR_ID'));
     var sheet = ss.getSheetByName('Calendar Exceptions');
     var holidays = sheet.getRange('A6:A').getValues();
-    var startDates = sheet.getRange('C6:C').getValues(); // 2019
-    var endDates = sheet.getRange('D6:D').getValues();
+    var startDatesRange = (docYear === 2019) ? 'C6:C' : 'F6:F';
+    var startDates = sheet.getRange(startDatesRange).getValues(); 
+    var endDatesRange = (docYear === 2019) ? 'D6:D' : 'G6:G';    
+    var endDates = sheet.getRange(endDatesRange).getValues();
     var statuses = sheet.getRange('T6:T').getValues();
     var excludedDates = [];
     
@@ -577,73 +623,5 @@ function exportEvents_(settings) {
       })
     })    
   } // exportEvents_.excludeEvents()
-
-//  function getExclusionDates_OLD(url) {
-//  
-//    var ss = Config.get('PROMOTION_DEADLINES_CALENDAR_ID');
-//    var sheet = ss.getSheetByName('Calendar Exceptions');
-//    var ranges = sheet.getRangeList(['A6:A', 'D5:D', 'H5:S']).getRanges();
-//    var titles = ranges[0].getValues();
-//    var values = ranges[1].getValues();
-//    var periods = ranges[2].getValues();
-//    var dates = [];
-//    
-//    for (var i = 0; i < titles.length; i++) {
-//    
-//      var title = String(titles[i][0]).trim();
-//      var value = String(values[i][0]).toLowerCase().trim();
-//      
-//      if (value !== 'yes') {
-//        continue;
-//      }
-//      
-//      var start;
-//      var end;
-//      
-//      for (var col = 0; col < periods[i].length; col++) {
-//        
-//        if (!isNaN(periods[i][col])) {
-//          
-//          if ((col + 1) % 2 != 0) {
-//            
-//            start = new Date(periods[i][col]);
-//            
-//          } else {
-//            
-//            end = new Date(periods[i][col]);
-//            
-//            if (start < end) {
-//              
-//              var startTS = Date.UTC(start.getFullYear(), start.getMonth(), start.getDate());
-//              var endTS   = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
-//              var days    = Math.floor((endTS - startTS) / NUMBER_OF_MS_IN_A_DAY_);
-//              
-//              for (var j = 0; j <= days; j++) {
-//                
-//                var date = new Date(start);
-//                
-//                date.setDate(date.getDate() + j);
-//                
-//                if (!isInArray_(dates, date)) {
-//                  dates.push(date);
-//                }
-//              }
-//              
-//            } else {
-//              
-//              if (!isInArray_(dates, start)) {
-//                dates.push(start);
-//              }
-//            }
-//          }
-//        }
-//        
-//      } // for each col
-//      
-//    } // for each day
-//    
-//    return dates;
-//    
-//  } // exportEvents_.getExclusionDates()
       
 } // exportEvents_()

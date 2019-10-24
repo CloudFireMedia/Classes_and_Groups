@@ -16,6 +16,8 @@ function getUi_() {
 }
 
 function getDateTimeFromDocTitle_(title) {
+  var logSheet = logInit_();
+  
   var dateInTitleArray = title.match(/\[\s*(\d+)\.(\d+)\.(\d+)\s*\]/);
   
   if (dateInTitleArray === null || dateInTitleArray.length !== 4) {
@@ -31,7 +33,8 @@ function getDateTimeFromDocTitle_(title) {
     throw new Error('Bad date in "' + title + '"');
   }
   
-  var date = new Date(year, month - 1, day);    
+  var date = new Date(year, month - 1, day); 
+  log_(logSheet, 'Got date ' + date + ' from doc title')
   return date
 }
 

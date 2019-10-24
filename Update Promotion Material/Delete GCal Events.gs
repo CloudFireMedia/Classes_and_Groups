@@ -64,6 +64,8 @@ function deleteEvents_(calendarNames) {
     
   }) // for each calendar
   
+  log_(logSheet, 'Finished deleting calendar events');
+  
   return 
   
   // Private Functions
@@ -77,10 +79,10 @@ function deleteEvents_(calendarNames) {
 
       if (event.isRecurringEvent()) {
         event.getEventSeries().deleteEventSeries();
-        log_(logSheet, 'Deleted event series"' + name + '"')        
+        log_(logSheet, 'Deleted event series"' + name + '" (' + event.getStartTime() + ')')        
       } else {
         event.deleteEvent();
-        log_(logSheet, 'Deleted event"' + name + '"')
+        log_(logSheet, 'Deleted event"' + name + '" (' + event.getStartTime() + ')')
       }    
     })
     

@@ -1,8 +1,10 @@
 function test_misc() {
-  var a = new Date()
-  var b = a.setDate(a.getDate() + 1)
-  if (b > a) {
-    throw 'STOP'
+  var docDate = new Date()
+  var day = docDate.getDay()
+  for (var offset = 0; day !== 0;) {
+    offset++
+    var newDate = new Date(docDate.getYear(), docDate.getMonth(), docDate.getDate() + offset)
+    day = newDate.getDay()
   }
   return
 }

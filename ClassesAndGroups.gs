@@ -2,7 +2,6 @@
 // ------------
 
 // Menu Items
-function instructionsDialogueBox() 		{instructionsDialogueBox_();}
 function formatDoc() 					{formatDoc_();}
 function showDeletePopup() 				{showDeletePopup_();}
 function showExportPopup() 				{showExportPopup_();}

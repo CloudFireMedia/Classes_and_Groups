@@ -147,8 +147,8 @@
 				<input id="saturday" name="populate_days[]" type="checkbox" value="saturday" checked="checked"/>
 			</div>
 		</fieldset>
-
-		<button id="export-btn">Export</button>
+    <button id="export-btn">Export</button>
+        
 	</form>
 	<div id="shade">
 		<div id="progressbar">
@@ -169,7 +169,7 @@
 
 			$('#export-btn').on('click', function(e) {
 				e.preventDefault();
-
+                
 				$('#export-btn').button('option', 'disabled', true);
 				$('#shade').show();
 
@@ -206,6 +206,7 @@
 
 			function onParseFailure(e) {
 				$('#export-btn').button('option', 'disabled', false);
+                $('#shade').hide();
 			}
 		});
 	</script>

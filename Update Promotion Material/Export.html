@@ -117,13 +117,6 @@
 			</div>
 		</fieldset>
 		<fieldset>
-			<legend>Holidays & Blackout Dates</legend>
-			<div class="row">
-				<label for="exclude_dates_ss_url">Google Spreadsheet URL</label>
-				<input id="exclude_dates_ss_url" name="exclude_dates_ss_url" class="ui-widget ui-textfield" type="text" placeholder="https://..." value=""/>
-			</div>
-		</fieldset>
-		<fieldset>
 			<legend>Days-of-week to populate events</legend>
 			<div class="row">
 				<label for="sunday">Sunday</label>
@@ -154,8 +147,8 @@
 				<input id="saturday" name="populate_days[]" type="checkbox" value="saturday" checked="checked"/>
 			</div>
 		</fieldset>
-
-		<button id="export-btn">Export</button>
+    <button id="export-btn">Export</button>
+        
 	</form>
 	<div id="shade">
 		<div id="progressbar">
@@ -176,7 +169,7 @@
 
 			$('#export-btn').on('click', function(e) {
 				e.preventDefault();
-
+                
 				$('#export-btn').button('option', 'disabled', true);
 				$('#shade').show();
 
@@ -200,7 +193,7 @@
 				google.script.run
 					.withFailureHandler(onParseFailure)
 					.withSuccessHandler(onParseSuccess)
-					.ExportEvents(values);
+					.exportEvents(values);
 			});
 
 			$('#settings').on('submit', function(e) {
@@ -213,6 +206,7 @@
 
 			function onParseFailure(e) {
 				$('#export-btn').button('option', 'disabled', false);
+                $('#shade').hide();
 			}
 		});
 	</script>

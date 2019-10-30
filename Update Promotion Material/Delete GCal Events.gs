@@ -1,65 +1,75 @@
-// Redevelopment Note: right now, the script deletes events one-at-a-time.
-// It should treat the first ocurenence of each event as one in a series and should delete
-// 'This and following events' (NOT 'This event' and NOT 'All events').
+// jshint: 28Oct2019
 
-// Ioan writes on Freelancer.com 'The script takes long because it depends on number of events in calendar.
-// In order to optimize it, probably a way would be to use direct the calendar API.
-// Without testing and without access to calendars I can't do that.
+function showDeletePopup_() {
 
-function ShowDeletePopup() {
-	var ui = DocumentApp.getUi(),
-		tmpl = HtmlService.createTemplateFromFile('Update Promotion Material/Delete.html'),
-		all_calendars = CalendarApp.getAllCalendars(),
-		calendars = [];
+  var calendars = [];
+  
+  CalendarApp.getAllCalendars().forEach(function(calendar) {
+    calendars.push(calendar.getName());  
+  });
 
-	for (var index in all_calendars) {
-		var calendar = all_calendars[index];
+  var template = HtmlService.createTemplateFromFile('Update Promotion Material/Delete.html');
 
-		calendars.push(calendar.getName());
-	}
+  template.content = {
+    'calendars': calendars
+  };
+  
+  var html = template.evaluate().setWidth(520).setHeight(240);  
+  DocumentApp.getUi().showModalDialog(html, 'Delete settings');
+  
+} // showDeletePopup_()
 
-	tmpl.content = {
-		'calendars': calendars
-	};
+function deleteEvents_(calendarNames) {
 
-	var html = tmpl.evaluate()
-				   .setWidth(520)
-				   .setHeight(240);
+  var logSheet = logInit_();
+  log_(logSheet, JSON.stringify(calendarNames));
 
-	ui.showModalDialog(html, 'Delete settings');
-}
+  var doc = Utils.getDoc();
+  var title = doc.getName();
+  
+  var start = getDateTimeFromDocTitle_(title);
+  
+  if (start === null) {
+    throw new Error('No date in doc title: [ yyyy.MM.dd ]');
+  }
 
-function DeleteEvents(calendars_names) {
-	var doc = DocumentApp.getActiveDocument(),
-		title = doc.getName(),
-		year = 1970,
-		month = 0,
-		day = 1,
-		res = title.match(/\[\s*(\d+)\.(\d+)\.(\d+)\s*\]/);
+  var end = new Date(start.getYear() + 1, start.getMonth(), start.getDate());
+  
+  calendarNames.forEach(function(calendarName) {
+  
+    var calendars = CalendarApp.getCalendarsByName(calendarName);
+    
+    if (calendars.length > 1) {
+      throw new Error('More that one calendar called "' + calendarName + '"');
+    }
 
-	if (res.length == 4) {
-		year = parseInt(res[1], 10);
-		month = parseInt(res[2], 10) - 1;
-		day = parseInt(res[3], 10);
-	}
+    // Although all of the events in a series are counted individually, once the 
+    // series has been deleted all the subsequent events are also deleted.
+    // So each time a event or event series is deleted we have to re-get the 
+    // whole list
 
-	var start = new Date(year, month, day, 0, 0, 0),
-		end = new Date((year + 1), month, day, 0, 0, 0);
+    var events = calendars[0].getEvents(start, end);
+    var loopCount = 0;
 
-	for (var i = 0; i < calendars_names.length; i++) {
-		var calendar = CalendarApp.getCalendarsByName(calendars_names[i]),
-			events = calendar[0].getEvents(start, end);
+    while (events.length > 0) {
+    
+      var event = events[0];
+      var name = event.getTitle();
+    
+      if (event.isRecurringEvent()) {              
+        event.getEventSeries().deleteEventSeries();
+        log_(logSheet, 'Deleted event series"' + name + '" (' + event.getStartTime() + ')');  
+      } else {
+        event.deleteEvent();
+        log_(logSheet, 'Deleted event "' + name + '" (' + event.getStartTime() + ')');
+      }        
+    
+      events = calendars[0].getEvents(start, end);  
 
-		while (events.length > 0) {
-			var event = events[0];
-
-			if (event.isRecurringEvent()) {
-				event.getEventSeries().deleteEventSeries();
-			} else {
-				event.deleteEvent();
-			}
-
-			events = calendar[0].getEvents(start, end);
-		}
-	}
-}
+    } // while still events 
+    
+  }); // for each calendar
+  
+  log_(logSheet, 'Finished deleting calendar events');
+     
+} // deleteEvents_()

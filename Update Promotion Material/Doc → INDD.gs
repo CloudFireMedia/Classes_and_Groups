@@ -1,158 +1,177 @@
-// created by Mikhail K. on freelancer.com
-// redevelopment notes: should download .json file to desktop rather than Drive home folder
+// jshint 28Oct2019
 
-function ChooseSettingsFile() {
-	var app = DocumentApp,
-		ui = app.getUi(),
-		result = ui.prompt(
-			'Do you want to use the settings file?',
-			"Please enter url of settings file. Sheet must be named 'Classroom Signage Quantities'",
-			ui.ButtonSet.OK_CANCEL
-		),
-		button = result.getSelectedButton(),
-		url = result.getResponseText().trim();
+function chooseSettingsFile_() {
+  var ui = DocumentApp.getUi();
+  
+  var result = ui.prompt(
+        'Enter Settings file URL',
+          'Please enter the URL of settings file, or leave blank for ' + 
+          '1 copy for each location. Tab must be named "Classroom Signage Quantities"',
+        ui.ButtonSet.OK_CANCEL
+      );
+      
+  var button = result.getSelectedButton();
+  
+  if (button !== ui.Button.OK) {
+    return;
+  }
 
-	switch (button) {
-		case ui.Button.OK: {
-			try {
-				var spreadsheet = SpreadsheetApp.openByUrl(url),
-					sheet = spreadsheet.getSheetByName('Classroom Signage Quantities'),
-					range = sheet.getDataRange(),
-					values = range.getValues(),
-					settings = {};
+  var url = result.getResponseText().trim();
+  var settings = {};
 
-				for (var i = 1; i < values.length; i++) {
-					var location = typeof(values[i][0]) == 'number' ? 'Room ' + values[i][0] : values[i][0].trim(),
-						copies = values[i][1];
+  try {
+  
+    if (url !== '') { 
+      
+      // Get the quantities for each room from the settings file      
+      var spreadsheet = SpreadsheetApp.openByUrl(url);
+      var sheet = spreadsheet.getSheetByName('Classroom Signage Quantities');
+      var range = sheet.getDataRange();
+      var values = range.getValues();
+      
+      for (var i = 1; i < values.length; i++) {
+        var location = (typeof(values[i][0]) === 'number') ? 'Room ' + values[i][0] : values[i][0].trim();
+        var copies = values[i][1];        
+        settings[location] = copies;
+      }
+    }
+    
+    ConvertToJson(settings);
+    
+  } catch (error) {
+    ui.alert(error.message);
+  }
+    
+  return;
+  
+  // Private Functions
+  // -----------------
+  
+  function ConvertToJson(settings) {
+  
+    var app = DocumentApp;
+    var doc = app.getActiveDocument();
+    var body = doc.getBody();
+    var paragraphs = body.getParagraphs();
+    var filename = doc.getName().split('.')[0].slice(2) + '.json'; // Expecting "[ YYYYY.MM.dd ] ...";
+    var data = {};
+    var result = {};
+    var day;
+    var time;
+    var location;
+    var title;
+    var room;
+    
+    if (settings === null) {
+      settings = {};
+    }
+    
+    for (var i=0; i < paragraphs.length; i++) {
+      var paragraph = paragraphs[i];
+      var text = paragraph.getText().trim();
+      var heading = paragraph.getHeading();
+      
+      if (text.toUpperCase() === 'OTHER EVENTS') {
+        break;
+      }
+      
+      switch (heading) {
+          // day of the week
+        case DocumentApp.ParagraphHeading.HEADING1: {
+          day = text;          
+          break;
+        }
+          // time
+        case DocumentApp.ParagraphHeading.HEADING2: {
+          time = text;          
+          break;
+        }
+          // title & location
+        case DocumentApp.ParagraphHeading.HEADING3: {
+          var header = text.split('|');
+          
+          if (header.length > 1) {
+            switch (header.length) {
+              case 2: {
+                title = header[0].trim();
+                location = header[1].trim();                
+                break;
+              }
+              case 3: {
+                title = header[0].trim();
+                location = header[2].trim();
+                break;
+              }
+            }
+            
+            if (!data.hasOwnProperty(location)) {
+              data[location] = {
+                'events': {},
+                'copies': 1
+              };
+              
+              for (room in settings) {
+                if (location.toUpperCase() === room.toUpperCase()) {
+                  data[location].copies = settings[room];
+                }
+              }
+            }
+            
+            if (!data[location].events.hasOwnProperty(day)) {
+              data[location].events[day] = [];
+            }
+            
+            data[location].events[day].push({
+              'title': title,
+              'time': time
+            });
+          }
+          
+          break;
+        }
+          // description
+        case DocumentApp.ParagraphHeading.HEADING4: {          
+          break;
+        }
+      }
+    }
+    
+    for (room in settings) {
+    
+      if (!settings.hasOwnProperty(room)) {
+        continue;
+      }
+    
+      for (location in data) {
+      
+        if (!data.hasOwnProperty(location)) {
+          continue;
+        }
+      
+        if (room.toUpperCase() == location.toUpperCase()) {
+          result[location] = data[location];
+        }
+      }
+    }
+    
+    if (Object.keys(settings).length === 0) {
+      for (location in data) {
+      
+        if (!data.hasOwnProperty(location)) {
+          continue;
+        }
+        
+        result[location] = data[location];
+      }
+    }
 
-					settings[location] = copies;
-				}
+    var DOWNLOAD_URL_ = 'https://script.google.com/macros/s/AKfycbwVM_JC2j5XDxVS9Z7Ghjw0yxFisD4iTme9GLUGHS6FpCecmHI/exec';
 
-				ConvertToJson(settings);
-			} catch (err) {
-				ui.alert(err.message);
-			}
+    var content = JSON.stringify(result);
+    var file = DriveApp.createFile(filename, content, MimeType.JAVASCRIPT);
+    
+    openWindow_(DOWNLOAD_URL_ + '?id=' + file.getId());
+    
+  } // chooseSettingsFile_.ConvertToJson()
 
-			break;
-		}
-		case ui.Button.CANCEL:
-		case ui.Button.CLOSE: {
-			ConvertToJson();
-
-			break;
-		}
-	}
-}
-
-function ConvertToJson(settings) {
-	var app = DocumentApp,
-		ui = app.getUi(),
-		doc = app.getActiveDocument(),
-		body = doc.getBody(),
-		paragraphs = body.getParagraphs(),
-		filename = doc.getName().split('.')[0] + '.json',
-		data = {},
-		result = {},
-		day, time, location, title;
-
-	if (settings == null) {
-		settings = {};
-	}
-
-	for (var i=0; i < paragraphs.length; i++) {
-		var paragraph = paragraphs[i],
-			text = paragraph.getText().trim(),
-			heading = paragraph.getHeading();
-
-		if (text.toUpperCase() == 'OTHER EVENTS') {
-			break;
-		}
-
-		switch (heading) {
-			// day of the week
-			case DocumentApp.ParagraphHeading.HEADING1: {
-				day = text;
-
-				break;
-			}
-			// time
-			case DocumentApp.ParagraphHeading.HEADING2: {
-				time = text;
-
-				break;
-			}
-			// title & location
-			case DocumentApp.ParagraphHeading.HEADING3: {
-				var header = text.split('|');
-
-				if (header.length > 1) {
-					switch (header.length) {
-						case 2: {
-							title = header[0].trim();
-							location = header[1].trim();
-
-							break;
-						}
-						case 3: {
-							title = header[0].trim();
-							location = header[2].trim();
-
-							break;
-						}
-					}
-
-					if (data[location] == null) {
-						data[location] = {
-							'events': {},
-							'copies': 1
-						};
-
-						for (var room in settings) {
-							if (location.toUpperCase() == room.toUpperCase()) {
-								data[location].copies = settings[room];
-							}
-						}
-					}
-
-					if (data[location].events[day] == null) {
-						data[location].events[day] = [];
-					}
-
-					data[location].events[day].push({
-						'title': title,
-						'time': time
-					});
-				}
-
-				break;
-			}
-			// description
-			case DocumentApp.ParagraphHeading.HEADING4: {
-				//
-
-				break;
-			}
-		}
-	}
-
-	for (var room in settings) {
-		for (var location in data) {
-			if (room.toUpperCase() == location.toUpperCase()) {
-				result[location] = data[location];
-			}
-		}
-	}
-
-	if (Object.keys(settings).length == 0) {
-		for (var location in data) {
-			if (result[location] == null) {
-				result[location] = data[location];
-			}
-		}
-	}
-
-	var content = JSON.stringify(result),
-		file = DriveApp.createFile(filename, content, MimeType.JAVASCRIPT);
-
-	ui.alert('File \"' + file.getName() + '\" saved in your google drive.');
-}
+} //chooseSettingsFile_()

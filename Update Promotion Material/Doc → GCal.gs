@@ -1,3 +1,5 @@
+// jshint: 28Oct2019
+
 /**
  * Show the popup to get the event export config from the user
  */
@@ -5,12 +7,13 @@
 function showExportPopup_() {
   var calendarNames = CalendarApp.getAllCalendars().map(function(calendar) {
     return calendar.getName();    
-  })
+  });
 
-  var template = HtmlService.createTemplateFromFile('Update Promotion Material/Export.html');
+  var template = HtmlService
+    .createTemplateFromFile('Update Promotion Material/Export.html');
 
   template.content = {
-    'calendars': calendarNames
+    calendars: calendarNames
   };
   
   var html = template.evaluate().setWidth(520).setHeight(530);
@@ -23,30 +26,26 @@ function showExportPopup_() {
  */
 
 function exportEvents_(settings) {
-  var logSheet = logInit_()
+  var logSheet = logInit_();
   
-  var regularCalendar = settings.regular_events_calendar
+  var regularCalendar = settings.regular_events_calendar;
   var regularEventsCalendars = CalendarApp.getCalendarsByName(regularCalendar);
   
   if (regularEventsCalendars.length > 1) {
     throw new Error('Multiple calendars called: "' + regularCalendar + '"');
   }
   
-  var regularEventsCalendar = regularEventsCalendars[0]
+  var regularEventsCalendar = regularEventsCalendars[0];
   
-  var newCalendar = settings.new_events_calendar
+  var newCalendar = settings.new_events_calendar;
   var newEventsCalendars = CalendarApp.getCalendarsByName(newCalendar);
   
   if (newEventsCalendars.length > 1) {
     throw new Error('Multiple calendars called: "' + newCalendar + '"');
   }
     
-  var newEventsCalendar =   newEventsCalendars[0]
-    
+  var newEventsCalendar =   newEventsCalendars[0];
   var events = parseEvents();
-
-return
-
   var exclusionDates = getExclusionDates(); 
   addEventsToCalendar();
   excludeEvents([regularEventsCalendar, newEventsCalendar]);  
@@ -63,18 +62,15 @@ return
   function parseEvents() {
   
     var populateDays = settings.populate_days;
-    var ui = getUi_();
-    var doc = getDoc_();    
+    var doc = Utils.getDoc();    
     var docDate = getDateTimeFromDocTitle_(doc.getName());
     docDate = checkDocDateIsASunday();
     var body = doc.getBody();
     var paragraphs = body.getParagraphs();
-    
     var events = [];
     var eventHeadingDay = null; 
     var timeFrame = null;
     var heading3 = null;
-
     var foundOtherEvents = false;   
     
     paragraphs.forEach(function(paragraph, paragraphIndex) {    
@@ -87,7 +83,7 @@ return
 
       if (foundOtherEvents) {    
       
-        processOtherEvents() 
+        processOtherEvents();
         
       } else { // Daily classes
       
@@ -115,8 +111,7 @@ return
                 Tuesday Morning Prayer Group | Room 123
                 Come to pray and to receive prayer.
                 Show less
-
-            
+          
             Heading 5 = 'event description paragraph' immediately followed by an 'event details paragraph' (Heading 6).
 
                 Example:
@@ -137,7 +132,7 @@ return
           }
           
           default:
-            throw new Error('Unexpected format: ' +  heading)
+            throw new Error('Unexpected format: ' +  heading);
           
         } // switch (heading)
         
@@ -145,26 +140,6 @@ return
       
       // Private Functions
       // -----------------
-
-      /**
-       * If the start date in the script is not a Sunday, the script should 
-       * take the first upcoming Sunday as the start date for populating 
-       * events on Calendar.
-       */
-       
-      function checkDocDateIsASunday() {
-        var newDocDate = docDate       
-        var day = newDocDate.getDay()
-        var offset = 0
-        while (day !== 0) {
-          offset++
-          var newDocDate = new Date(docDate.getYear(), docDate.getMonth(), docDate.getDate() + offset)
-          day = newDocDate.getDay()
-        }
-        log_(logSheet, 'Updated docDate to ' + newDocDate)
-        return newDocDate
-      
-      } // exportEvents_.parseEvents.checkDocDateIsASunday()
 
       /**
        * If this is the second or more time that a heading has been found
@@ -185,30 +160,26 @@ return
         
         var time = text.toUpperCase().trim();
         var finds = time.match(/^([0-9]{1,2})\:([0-9]{1,2})([AM|PM]{2})\s*[–\-]\s*([0-9]{1,2})\:([0-9]{1,2})([AM|PM]{2})$/);    
-        var timeFrame = null
+        var timeFrame;
         
-        if (finds !== null) {
-          if (finds.length === 7) {
-            timeFrame = {
-              'start': {
-                'hours': to24Hours_(Number(finds[1]), finds[3]),
-                'minutes': Number(finds[2])
-              },
-              'end': {
-                'hours': to24Hours_(Number(finds[4]), finds[6]),
-                'minutes': Number(finds[5])
-              },
-            };
-          }
-        }
-        
-        if (timeFrame === null) {
+        if (finds !== null && finds.length === 7) {
+          timeFrame = {
+            'start': {
+              'hours': to24Hours_(Number(finds[1]), finds[3]),
+              'minutes': Number(finds[2])
+            },
+            'end': {
+              'hours': to24Hours_(Number(finds[4]), finds[6]),
+              'minutes': Number(finds[5])
+            },
+          };
+        } else {
           throw new Error('Heading2 must only be used for the time frame');
         }
         
         return timeFrame;
         
-      } // exportEvents_.parseEvents.processDailyEvents.processHeading2
+      } // exportEvents_.parseEvents.processDailyEvents.processHeading2()
       
       function processHeading3() {
         
@@ -228,13 +199,13 @@ return
           
         } else {
         
-          throw new Error('Bad Heading3 format. Expected "[title] | [ ... | location] | [location]"')
+          throw new Error('Bad Heading3 format. Expected "[title] | [ ... | location] | [location]"');
         }
         
         return {
           title: title,
           location: location
-        }
+        };
         
       } // exportEvents_.parseEvents.processDailyEvents.processHeading3
       
@@ -245,6 +216,10 @@ return
         var curYear = docDate.getFullYear();
         var curMonth = docDate.getMonth();
         var curDay = docDate.getDate();
+        
+        if (timeFrame === null) {
+          log_(logSheet, 'No time frame has been found yet.');
+        }
         
         var dates = {
           'start': new Date(curYear, curMonth, curDay, timeFrame.start.hours, timeFrame.start.minutes),
@@ -259,11 +234,19 @@ return
                 
         var dayName = DAYS_OF_WEEK_[dates.start.getDay()].toLowerCase();
         
+        if (heading3 === null) {
+          throw new Error('Processing H4/5 before H3');
+        }
+        
+        var contactText = '<br><br><b>Contact:</b> ' + CONTACT_NAME_ + ' at ' + 
+          '<a href="mailto:' + CONTACT_EMAIL_ + '">' + CONTACT_EMAIL_+ '</a>';
+
+        
         if (populateDays.indexOf(dayName) !== -1) {
           events.push({
             'title': heading3.title,
             'description': '<b>What\'s it all about?</b> '+ description + 
-            ' <br><br><b>Contact:</b> Greg Brewer at <a href="mailto:greg.brewer@ccnash.org">greg.brewer@ccnash.org</a>',
+            contactText,
             'location': heading3.location,
             'dates': dates,
             'recurrence': (conditions != null) ? 'MONTHLY' : 'WEEKLY',
@@ -271,7 +254,7 @@ return
           });
         }
         
-        return 
+        return;
         
         // Private Functions
         // -----------------
@@ -284,7 +267,7 @@ return
             return;
           }
             
-          note = note.substring(3);
+          note = note.substring(3); // Jump past the '>>'
           
           // Look for "Starts [month] [day]", e.g. "Start January 4".
           var finds = note.match(/^STARTS\s*(\w+)\s*([0-9]{1,2})/);
@@ -293,6 +276,10 @@ return
           
             var month = MONTHS_.indexOf(finds[1].toUpperCase());
             var day = Number(finds[2]);
+            
+            if (timeFrame === null) {
+              log_(logSheet, 'No time frame has been found yet.');
+            }
             
             dates = {
               'start': new Date(curYear, month, day, timeFrame.start.hours, timeFrame.start.minutes),
@@ -343,14 +330,14 @@ return
           
             // title & location
           case DocumentApp.ParagraphHeading.HEADING3: {
-            heading3 = processHeading3(text)
+            heading3 = processHeading3(text);
             break;
           }
           
             // description
           case DocumentApp.ParagraphHeading.HEADING4:
           case DocumentApp.ParagraphHeading.HEADING5: {
-            processHeading45()
+            processHeading45();
             break;
           }
           
@@ -361,7 +348,7 @@ return
           }
           
           default: {
-            throw new Error('Unexpected heading type: ' + heading)
+            throw new Error('Unexpected heading type: ' + heading);
           }
         }
         
@@ -376,9 +363,11 @@ return
           var paragraphDate = paragraphs[paragraphIndex + 1];
           var curYear = docDate.getFullYear();
           var dates = null;
+          var month;
+          var day;
           
           if (paragraphDate.getHeading() !== DocumentApp.ParagraphHeading.HEADING6) {
-            throw new Error('No Heading 6 date for "' + description + '"')
+            throw new Error('No Heading 6 date for "' + description + '"');
           }
           
           var note = paragraphDate.getText().toUpperCase().trim();
@@ -392,8 +381,8 @@ return
             
             if (finds != null && finds.length == 3) {
             
-              var month = MONTHS_.indexOf(finds[1].toUpperCase()),
-                  day = Number(finds[2]);
+              month = MONTHS_.indexOf(finds[1].toUpperCase());
+              day = Number(finds[2]);
               
               dates = {
                 'start': new Date(curYear, month, day, 0, 0),
@@ -406,13 +395,13 @@ return
             
             if (finds !== null && finds.length == 7) {
             
-              var month = MONTHS_.indexOf(finds[1].toUpperCase());
+              month = MONTHS_.indexOf(finds[1].toUpperCase());
               
               if (month === -1) {
-                throw new Error('Could not find "OTHER EVENTS" month ' + finds[1])
+                throw new Error('Could not find "OTHER EVENTS" month ' + finds[1]);
               }
               
-              var day = Number(finds[2]);
+              day = Number(finds[2]);
               var hours;
               var minutes = 0;
               
@@ -448,21 +437,45 @@ return
             
           } else {
           
-            log_(logSheet, 'No dates assigned for "' + description + '"')
+            log_(logSheet, 'No dates assigned for "' + description + '"');
           }
           
         } // exportEvents_.parseEvents.processOtherEvents.processHeading45()
               
       } // exportEvents_.parseEvents.processOtherEvents()
        
-    }) // for each paragraph
+    }); // for each paragraph
     
     return events;
+    
+    // Private Functions
+    // -----------------
+    
+    /**
+    * If the start date in the script is not a Sunday, the script should 
+    * take the first upcoming Sunday as the start date for populating 
+    * events on Calendar.
+    */
+    
+    function checkDocDateIsASunday() {
+      var newDocDate = docDate;
+      var day = newDocDate.getDay();
+      var offset = 0;
+      while (day !== 0) {
+        offset++;
+        newDocDate = new Date(docDate.getYear(), docDate.getMonth(), docDate.getDate() + offset);
+        day = newDocDate.getDay();
+      }
+      log_(logSheet, 'Updated docDate to ' + newDocDate);
+      return newDocDate;
+      
+    } // exportEvents_.parseEvents.checkDocDateIsASunday()
     
   } // exportEvents_.parseEvents()
 
   function addEventsToCalendar() {
     var logSheet = logInit_();
+    var recurrence;
   
     for (var index in events) {
     
@@ -480,9 +493,9 @@ return
       switch (event.recurrence) {
         case 'MONTHLY': {
           if (event.conditions != null) {
-            var recurrence = CalendarApp.newRecurrence().addWeeklyRule(),
-                startDay = (7 * (event.conditions.queue - 1)),
-                  excludeDays = [];
+            recurrence = CalendarApp.newRecurrence().addWeeklyRule();
+            var startDay = (7 * (event.conditions.queue - 1));
+            var excludeDays = [];
             
             for (var i = 1; i <= 31; i++) {
               excludeDays.push(i);
@@ -491,10 +504,10 @@ return
             excludeDays.splice(excludeDays.indexOf(startDay + 1), 7);
             
             recurrence.addMonthlyExclusion()
-            .onlyOnMonthDays(excludeDays)
-            .onlyOnWeekday(CalendarApp.Weekday[event.conditions.day]);
+              .onlyOnMonthDays(excludeDays)
+              .onlyOnWeekday(CalendarApp.Weekday[event.conditions.day]);
             
-            if (event.dates['finish'] != null) {
+            if (event.dates.finish != null) {
               recurrence.until(event.dates.finish);
             }
           }
@@ -512,9 +525,9 @@ return
           break;
         }
         case 'WEEKLY': {
-          var recurrence = CalendarApp.newRecurrence().addWeeklyRule();
+          recurrence = CalendarApp.newRecurrence().addWeeklyRule();
           
-          if (event.dates['finish'] != null) {
+          if (event.dates.finish != null) {
             recurrence.until(event.dates.finish);
           }
           
@@ -543,7 +556,7 @@ return
           break;
         }
         default: {
-          throw new Error('Bad recurrence type')
+          throw new Error('Bad recurrence type');
         }
         
       } // switch(recurrence)
@@ -560,9 +573,9 @@ return
   } // exportEvents_.addEventsToCalendar()
   
   function getExclusionDates() {
-    var doc = getDoc_();    
+    var doc = Utils.getDoc();    
     var docDate = getDateTimeFromDocTitle_(doc.getName());
-    var docYear = docDate.getYear()
+    var docYear = docDate.getYear();
     
     if (docYear !== 2019 && docYear !== 2020) {
       throw new Error('"Exclude dates" only support 2019 and 2020 at the moment');
@@ -587,9 +600,9 @@ return
         do {
           excludedDates.push(nextDate);
           nextDate = new Date(nextDate.getYear(), nextDate.getMonth(), nextDate.getDate() + 1);
-        } while (nextDate < endDate) 
+        } while (nextDate < endDate); 
       }
-    })
+    });
     
     // Remove duplicates
     var unique = {};
@@ -599,7 +612,7 @@ return
       }
     });
     
-    var uniqueArray = []
+    var uniqueArray = [];
     
     for (var key in unique) {    
       if (!unique.hasOwnProperty(key)) {
@@ -613,15 +626,14 @@ return
   } // exportEvents_.getExclusionDates()
 
   function excludeEvents(calendars) {
-    var logSheet = logInit_();
     exclusionDates.forEach(function(date) {
       calendars.forEach(function(calendar) {
 		calendar.getEventsForDay(date).forEach(function(event) {
           event.deleteEvent();
-          log_(logSheet, 'Removed event for ' + date);
-        })
-      })
-    })    
+          log_(logInit_(), 'Removed event for ' + date);
+        });
+      });
+    }); 
   } // exportEvents_.excludeEvents()
       
 } // exportEvents_()

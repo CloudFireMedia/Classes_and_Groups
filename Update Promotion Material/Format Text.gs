@@ -1,28 +1,24 @@
+// jshint - 28Oct2019
+
 function formatDoc_() {
-
-// DocumentApp.getActiveDocument().getBody().getParagraphs()[0].getText().editAsText().setText(text)
-
-  var logSheet = logInit_();
-
-  var body = getDoc_().getBody();
+  var body = Utils.getDoc().getBody();
   var paragraphs = body.getParagraphs();
   
-  paragraphs.forEach(function(paragraph) {
+  paragraphs.forEach(function(paragraph, paragraphIndex) {
     var text = paragraph.getText();
     var wordArray = text.split(' ');
     var firstWord = wordArray[0].toUpperCase();    
     var firstTwoWords = (wordArray[0] + ' ' + wordArray[1]).toUpperCase();
     var isFirstWordDayOfWeek = DAYS_OF_WEEK_.indexOf(firstWord) !== -1; 
-    var justASingleWord = (wordArray[1] == undefined)
+    var justASingleWord = (wordArray[1] == undefined);
     var timeRegex = new RegExp(/([0-9]((\ ){0,1})((AM)|(PM)|(am)|(pm)))|([1-9]:[0-5][0-9]((\ ){0,1})((AM)|(PM)|(am)|(pm)))|(1[0-2]:[0-5][0-9]((\ ){0,1})((AM)|(PM)|(am)|(pm)))/);
     var isTimeString = timeRegex.test(firstWord);
-    var style = {}
     
-    var BOLD = true
-    var NOT_BOLD = false
+    var BOLD = true;
+    var NOT_BOLD = false;
     
-    var ITALIC = true
-    var NOT_ITALIC = false
+    var ITALIC = true;
+    var NOT_ITALIC = false;
 
     if ((justASingleWord && isFirstWordDayOfWeek) || (firstTwoWords === 'OTHER EVENTS')) {
 
@@ -40,18 +36,18 @@ function formatDoc_() {
       
         // Event title
         setStyle(BOLD, 10, NOT_ITALIC, 'Lato', 'HEADING3');        
-        var toTitleCase = toTitleCase_(text);
+        var toTitleCase = Utils.toTitleCase(text);
         paragraph.editAsText().setText(toTitleCase);
       
       } else {
       
-        var nextI = i + 1;
+        var nextIndex = paragraphIndex + 1;
 
-        if ((firstWord.indexOf('>>') === -1) && (nextI < paragraphs.length)) {
+        if ((firstWord.indexOf('>>') === -1) && (nextIndex < paragraphs.length)) {
         
           // This paragraph does not begin with '>>' and there is one after that
           
-          var nextParaText = paragraphs[nextI].getText();          
+          var nextParaText = paragraphs[nextIndex].getText();          
           var nextParaWords = nextParaText.split(' ');
           var nextParaFirstWord = nextParaWords[0];
           
@@ -60,27 +56,42 @@ function formatDoc_() {
             // Neither this or the next paragraph start with '>>', 
             // so event description where event details DO NOT follow in the next line
 
-            setStyle(NOT_BOLD, 9.5, NOT_ITALIC, 'Lato', 'HEADING4')
+            setStyle(NOT_BOLD, 9.5, NOT_ITALIC, 'Lato', 'HEADING4');
             
           } else {
 
             // This paragraph does not start with '>>', but the next one does  
             // so event description where event details DO  follow in the next line
 
-            setStyle(NOT_BOLD, 9.5, NOT_ITALIC, 'Lato', 'HEADING5')
+            setStyle(NOT_BOLD, 9.5, NOT_ITALIC, 'Lato', 'HEADING5');
           }
           
-          var toSentenceCase = toSentenceCase_(text);
+          var toSentenceCase = Utils.toSentenceCase(text);
           paragraph.editAsText().setText(toSentenceCase);
                     
         } else { // Starts with '>>'
 
-          setStyle(NOT_BOLD, 9.5, ITALIC, 'Lato', 'HEADING6')
+          setStyle(NOT_BOLD, 9.5, ITALIC, 'Lato', 'HEADING6');
         }
       }
     }
     
-  }) // for each paragraph
+    // Private Functions
+    // -----------------
+  
+    function setStyle(bold, fontSize, italic, fontStyle, heading) {
+    
+      var style = {};
+      style[DocumentApp.Attribute.BOLD] = bold;
+      style[DocumentApp.Attribute.FONT_SIZE] = fontSize;
+      style[DocumentApp.Attribute.ITALIC] = italic;
+      style[DocumentApp.Attribute.FONT_FAMILY] = fontStyle;
+        
+      paragraph.setAttributes(style);
+      paragraph.setHeading(DocumentApp.ParagraphHeading[heading]);
+    }
+  
+  }); // for each paragraph
   
   removeBlankParagraph();
   applyColorToText();
@@ -92,25 +103,13 @@ function formatDoc_() {
   // Private Functions
   // -----------------
 
-  function setStyle(bold, fontSize, italic, fontStyle, heading) {
-  
-    var style = {};
-    style[DocumentApp.Attribute.BOLD] = bold;
-    style[DocumentApp.Attribute.FONT_SIZE] = fontSize;
-    style[DocumentApp.Attribute.ITALIC] = italic;
-    style[DocumentApp.Attribute.FONT_FAMILY] = fontStyle;
-      
-    paragraph.setAttributes(style);
-    paragraph.setHeading(DocumentApp.ParagraphHeading[heading]);
-  }
-
   function doubleSpaceToSingle() {
     body.replaceText("[ ]{2,}", " "); 
   }
   
   function removeBlankParagraph() {
     var paragraphs = body.getParagraphs();
-    var numberOfParagraphs = paragraphs.length
+    var numberOfParagraphs = paragraphs.length;
     for (var i = 0; i < numberOfParagraphs; i++) {
       if (paragraphs[i].getText() === '') {
         if (i < (numberOfParagraphs - 1)) {
@@ -134,7 +133,7 @@ function formatDoc_() {
     body.replaceText("New!", "NEW!");
     body.replaceText("new!", "NEW!");
     
-    return
+    return;
     
     // Private Functions
     // -----------------

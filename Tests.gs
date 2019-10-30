@@ -1,3 +1,4 @@
+
 function test_misc() {
   var docDate = new Date()
   var day = docDate.getDay()
@@ -43,7 +44,34 @@ function test_formatDoc() {
 }
 
 function test_DeleteEvents() {
-  DeleteEvents_(["andrew@cloudfire.media"])
+
+  var startTime = new Date(2019,9,1)
+  var endTime = new Date(2020,0,31)
+  var events = CalendarApp.getCalendarsByName("andrew@cloudfire.media")[0].getEvents(startTime, endTime)
+  var logSheet = logInit_()
+  
+  log_(logSheet, 'events: '+ events.length)
+
+//  deleteEvents_(["andrew@cloudfire.media"])
+  
+//  function deleteEvents(events) {
+    
+    events.forEach(function(event) {
+    
+      var name = event.getTitle();
+
+      if (event.isRecurringEvent()) {
+        event.getEventSeries().deleteEventSeries();
+        log_(logSheet, 'Deleted event series"' + name + '" (' + event.getStartTime() + ')');    
+      } else {
+        event.deleteEvent();
+        log_(logSheet, 'Deleted event "' + name + '" (' + event.getStartTime() + ')');
+      }    
+    });
+    
+//  } // deleteEvents_.deleteEvents()
+  
+  
 }
 
 function test_deleteAllEvents() {

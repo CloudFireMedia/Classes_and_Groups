@@ -1,6 +1,7 @@
+// jshint 28Oct2019
+
 function chooseSettingsFile_() {
-  var app = DocumentApp;
-  var ui = app.getUi();
+  var ui = DocumentApp.getUi();
   
   var result = ui.prompt(
         'Enter Settings file URL',
@@ -16,32 +17,29 @@ function chooseSettingsFile_() {
   }
 
   var url = result.getResponseText().trim();
-  var settings = null;
+  var settings = {};
 
   try {
   
     if (url !== '') { 
       
-      // Get the quantities for each room from the settings file
-      
+      // Get the quantities for each room from the settings file      
       var spreadsheet = SpreadsheetApp.openByUrl(url);
       var sheet = spreadsheet.getSheetByName('Classroom Signage Quantities');
       var range = sheet.getDataRange();
       var values = range.getValues();
-      var settings = {};
       
       for (var i = 1; i < values.length; i++) {
         var location = (typeof(values[i][0]) === 'number') ? 'Room ' + values[i][0] : values[i][0].trim();
-        var copies = values[i][1];
-        
+        var copies = values[i][1];        
         settings[location] = copies;
       }
     }
     
     ConvertToJson(settings);
     
-  } catch (err) {
-    ui.alert(err.message);
+  } catch (error) {
+    ui.alert(error.message);
   }
     
   return;
@@ -52,17 +50,17 @@ function chooseSettingsFile_() {
   function ConvertToJson(settings) {
   
     var app = DocumentApp;
-    var ui = app.getUi();
     var doc = app.getActiveDocument();
     var body = doc.getBody();
     var paragraphs = body.getParagraphs();
-    var filename = doc.getName().split('.')[0].slice(2) + '.json'; // Expecting "[ YYYYY.MM.dd ] ..."
+    var filename = doc.getName().split('.')[0].slice(2) + '.json'; // Expecting "[ YYYYY.MM.dd ] ...";
     var data = {};
     var result = {};
     var day;
     var time;
     var location;
     var title;
+    var room;
     
     if (settings === null) {
       settings = {};
@@ -112,7 +110,7 @@ function chooseSettingsFile_() {
                 'copies': 1
               };
               
-              for (var room in settings) {
+              for (room in settings) {
                 if (location.toUpperCase() === room.toUpperCase()) {
                   data[location].copies = settings[room];
                 }
@@ -138,8 +136,18 @@ function chooseSettingsFile_() {
       }
     }
     
-    for (var room in settings) {
-      for (var location in data) {
+    for (room in settings) {
+    
+      if (!settings.hasOwnProperty(room)) {
+        continue;
+      }
+    
+      for (location in data) {
+      
+        if (!data.hasOwnProperty(location)) {
+          continue;
+        }
+      
         if (room.toUpperCase() == location.toUpperCase()) {
           result[location] = data[location];
         }
@@ -147,24 +155,23 @@ function chooseSettingsFile_() {
     }
     
     if (Object.keys(settings).length === 0) {
-      for (var location in data) {
-        if (!result.hasOwnProperty(location)) {
-          result[location] = data[location];
+      for (location in data) {
+      
+        if (!data.hasOwnProperty(location)) {
+          continue;
         }
+        
+        result[location] = data[location];
       }
     }
 
-    var DOWNLOAD_URL_ = 'https://script.google.com/macros/s/AKfycbwVM_JC2j5XDxVS9Z7Ghjw0yxFisD4iTme9GLUGHS6FpCecmHI/exec'
+    var DOWNLOAD_URL_ = 'https://script.google.com/macros/s/AKfycbwVM_JC2j5XDxVS9Z7Ghjw0yxFisD4iTme9GLUGHS6FpCecmHI/exec';
 
     var content = JSON.stringify(result);
     var file = DriveApp.createFile(filename, content, MimeType.JAVASCRIPT);
     
-    openWindow_(DOWNLOAD_URL_ + '?id=' + file.getId())
+    openWindow_(DOWNLOAD_URL_ + '?id=' + file.getId());
     
-//    var userInterface = HtmlService.createHtmlOutput(
-//      '<p>File <a href="' + file.getDownloadUrl() + '">' + filename + '</a> saved in your google drive.</p>');
-//    
-//    ui.showModalDialog(userInterface, 'Download INDD file')
-  }
+  } // chooseSettingsFile_.ConvertToJson()
 
-} // ConvertToJson()
+} //chooseSettingsFile_()

@@ -59,11 +59,15 @@ function exportEvents_(settings) {
    * Convert the C&G GDoc into an array of GCal event objects
    */
   
-  function parseEvents() {
-  
+  function parseEvents() {  
     var populateDays = settings.populate_days;
-    var doc = Utils.getDoc();    
+    var doc = Utils.getDoc(TEST_DOC_ID_);
     var docDate = getDateTimeFromDocTitle_(doc.getName());
+    
+    if (docDate === null) {
+      throw new Error('No date in doc title: [ yyyy.MM.dd ]: ' + doc.getName());
+    }
+     
     docDate = checkDocDateIsASunday();
     var body = doc.getBody();
     var paragraphs = body.getParagraphs();
@@ -71,7 +75,7 @@ function exportEvents_(settings) {
     var eventHeadingDay = null; 
     var timeFrame = null;
     var heading3 = null;
-    var foundOtherEvents = false;   
+    var foundOtherEvents = false;
     
     paragraphs.forEach(function(paragraph, paragraphIndex) {    
       var text = paragraph.getText().trim();
@@ -153,6 +157,7 @@ function exportEvents_(settings) {
         }
         
         eventHeadingDay = text.toLowerCase().trim();
+        timeFrame = null;
         
       } // exportEvents_.parseEvents.processDailyEvents.processHeading1
       
@@ -181,8 +186,11 @@ function exportEvents_(settings) {
         
       } // exportEvents_.parseEvents.processDailyEvents.processHeading2()
       
-      function processHeading3() {
-        
+      function processHeading3() {   
+        if (timeFrame === null) {
+          throw new Error('Should have found a time frame before the event description.')
+        }
+      
         var header = text.split('|');
         var title;
         var location;
@@ -217,10 +225,6 @@ function exportEvents_(settings) {
         var curMonth = docDate.getMonth();
         var curDay = docDate.getDate();
         
-        if (timeFrame === null) {
-          log_(logSheet, 'No time frame has been found yet.');
-        }
-        
         var dates = {
           'start': new Date(curYear, curMonth, curDay, timeFrame.start.hours, timeFrame.start.minutes),
           'end': new Date(curYear, curMonth, curDay, timeFrame.end.hours, timeFrame.end.minutes)
@@ -253,7 +257,7 @@ function exportEvents_(settings) {
             'conditions': conditions
           });
         }
-        
+                
         return;
         
         // Private Functions
@@ -278,7 +282,7 @@ function exportEvents_(settings) {
             var day = Number(finds[2]);
             
             if (timeFrame === null) {
-              log_(logSheet, 'No time frame has been found yet.');
+              throw new Error('No time frame has been found yet.');
             }
             
             dates = {
@@ -575,6 +579,11 @@ function exportEvents_(settings) {
   function getExclusionDates() {
     var doc = Utils.getDoc();    
     var docDate = getDateTimeFromDocTitle_(doc.getName());
+        
+    if (docDate === null) {
+      throw new Error('No date in doc title: [ yyyy.MM.dd ]: ' + doc.getName());
+    }
+ 
     var docYear = docDate.getYear();
     
     if (docYear !== 2019 && docYear !== 2020) {

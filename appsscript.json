@@ -2,13 +2,14 @@
   "timeZone": "America/Chicago",
   "dependencies": {
     "libraries": [{
-      "userSymbol": "Utils",
-      "libraryId": "1VFIfuvYy0l7pL7Z6Zm7ejJwfSyaOxUUYIEHrGy6XcqH6p_4i8-GA0Qpx",
-      "version": "4"
-    }, {
       "userSymbol": "Config",
       "libraryId": "1oO44r3nax5MO1XsI1hlr4ZM0OtPVCQKgDYUe08ej_SkIKn9uvzZ6WKQl",
       "version": "10"
+    }, {
+      "userSymbol": "Utils",
+      "libraryId": "1VFIfuvYy0l7pL7Z6Zm7ejJwfSyaOxUUYIEHrGy6XcqH6p_4i8-GA0Qpx",
+      "version": "4",
+      "developmentMode": true
     }]
   },
   "webapp": {

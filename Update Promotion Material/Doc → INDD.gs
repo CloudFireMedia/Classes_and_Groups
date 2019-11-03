@@ -1,22 +1,34 @@
 // jshint 28Oct2019
 
 function chooseSettingsFile_() {
-  var ui = DocumentApp.getUi();
-  
-  var result = ui.prompt(
-        'Enter Settings file URL',
-          'Please enter the URL of settings file, or leave blank for ' + 
-          '1 copy for each location. Tab must be named "Classroom Signage Quantities"',
-        ui.ButtonSet.OK_CANCEL
-      );
-      
-  var button = result.getSelectedButton();
-  
-  if (button !== ui.Button.OK) {
-    return;
-  }
 
-  var url = result.getResponseText().trim();
+  var url
+
+  if (TEST_USE_UI_URL_) {
+
+    var ui = DocumentApp.getUi();
+    
+    var result = ui.prompt(
+          'Enter Settings file URL',
+            'Please enter the URL of settings file, or leave blank for ' + 
+            '1 copy for each location. Tab must be named "Classroom Signage Quantities"',
+          ui.ButtonSet.OK_CANCEL
+        );
+        
+    var button = result.getSelectedButton();
+    
+    if (button !== ui.Button.OK) {
+      return;
+    }
+  
+    url = result.getResponseText().trim();
+
+  } else {
+
+    url = TEST_SIGNAGE_SHEET_URL_;
+    log_(logInit_(), '!!!! WARNING - Using test signage sheet !!!!')
+  }
+  
   var settings = {};
 
   try {
@@ -48,12 +60,10 @@ function chooseSettingsFile_() {
   // -----------------
   
   function ConvertToJson(settings) {
-  
-    var app = DocumentApp;
-    var doc = app.getActiveDocument();
+    var doc = Utils.getDoc();
     var body = doc.getBody();
-    var paragraphs = body.getParagraphs();
-    var filename = doc.getName().split('.')[0].slice(2) + '.json'; // Expecting "[ YYYYY.MM.dd ] ...";
+    var paragraphs = body.getParagraphs();   
+    var filename = 'IMPORT ' + doc.getName().split('.')[0].slice(2) + '.json'; // Expecting "[ YYYYY.MM.dd ] ...";    
     var data = {};
     var result = {};
     var day;
@@ -61,10 +71,6 @@ function chooseSettingsFile_() {
     var location;
     var title;
     var room;
-    
-    if (settings === null) {
-      settings = {};
-    }
     
     for (var i=0; i < paragraphs.length; i++) {
       var paragraph = paragraphs[i];
@@ -113,6 +119,7 @@ function chooseSettingsFile_() {
               for (room in settings) {
                 if (location.toUpperCase() === room.toUpperCase()) {
                   data[location].copies = settings[room];
+                  break;
                 }
               }
             }
@@ -137,17 +144,13 @@ function chooseSettingsFile_() {
     }
     
     for (room in settings) {
-    
       if (!settings.hasOwnProperty(room)) {
         continue;
       }
-    
       for (location in data) {
-      
         if (!data.hasOwnProperty(location)) {
           continue;
-        }
-      
+        }      
         if (room.toUpperCase() == location.toUpperCase()) {
           result[location] = data[location];
         }
@@ -155,17 +158,13 @@ function chooseSettingsFile_() {
     }
     
     if (Object.keys(settings).length === 0) {
-      for (location in data) {
-      
+      for (location in data) {      
         if (!data.hasOwnProperty(location)) {
           continue;
-        }
-        
+        }        
         result[location] = data[location];
       }
     }
-
-    var DOWNLOAD_URL_ = 'https://script.google.com/macros/s/AKfycbwVM_JC2j5XDxVS9Z7Ghjw0yxFisD4iTme9GLUGHS6FpCecmHI/exec';
 
     var content = JSON.stringify(result);
     var file = DriveApp.createFile(filename, content, MimeType.JAVASCRIPT);

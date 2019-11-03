@@ -1,3 +1,4 @@
+
 function getDateTimeFromDocTitle_(title) {
   var logSheet = logInit_();
   

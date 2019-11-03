@@ -1,11 +1,26 @@
 var SCRIPT_NAME = 'ClassesAndGroups';
-var SCRIPT_VERSION = 'v1.6';
+var SCRIPT_VERSION = 'v1.6.dev_ajr';
 
-// var TEST_DOC_ID_ = '12XwMZoQkukFdZKzGYZIOHW7U5F9dieFe0g-1PtxwyKY';
-// var TEST_DOC_ID_ = '1kQhFH08icw5K2Ew7bzVEyFwydX9ECLUvb-tKm7EJSto'; // [ 2020.04.06 ] Christ Church Communities (C3) Spring Classes + Groups_Booklet - Final State
-var TEST_DOC_ID_ = '1i2KMHWAYQeTHSwKEpKvFN97WlMTJkdyoCrvXxYqySsc'; // [ 2019.10.20 ] C&G - exportEvents testing
+// Tests
+// -----
 
-var LOG_SHEET_ID_ = '1e4_oaaxoXfr2BWByopjzcdDvLPTyiG2GcCMM5H5OHFE'; // Classes_and_Groups Log
+var PRODUCTION_VERSION = true
+
+var TEST_DOC_ID_ = '1TJOotfl6Ifdx1I_f_oUQm2NJ06SXRkRYlJlT_LQ1vHY'; 
+
+var TEST_USE_UI_URL_ = true
+var TEST_SIGNAGE_SHEET_URL_ = 'https://docs.google.com/spreadsheets/d/1qVZDPBynzOzSgWJj_LW1vrp98kHnEweA0Cp2ICMAZbk/edit#gid=0';
+
+if (PRODUCTION_VERSION) {
+  if (!TEST_USE_UI_URL_) {
+    throw new Error('Test flag set in production version');
+  }
+}
+
+// Enums and constants
+// -------------------
+
+var DOWNLOAD_URL_ = 'https://script.google.com/macros/s/AKfycbwVM_JC2j5XDxVS9Z7Ghjw0yxFisD4iTme9GLUGHS6FpCecmHI/exec';
 
 // TODO - CCN Specific - https://trello.com/c/715exf5P
 var CONTACT_NAME_ = 'Greg Brewer';

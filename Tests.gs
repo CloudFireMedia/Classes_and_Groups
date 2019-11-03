@@ -1,13 +1,16 @@
 
 function test_misc() {
-  var docDate = new Date()
-  var day = docDate.getDay()
-  for (var offset = 0; day !== 0;) {
-    offset++
-    var newDate = new Date(docDate.getYear(), docDate.getMonth(), docDate.getDate() + offset)
-    day = newDate.getDay()
-  }
+  var doc = DocumentApp.openById('12twNDzyMBA0iHmqm79Vr0KIU8O35wklvWWlJogKC3-g')
+  var a = 'IMPORT ' + doc.getName().split('\\.')[0] + '.json';
   return
+}
+
+function test_doGet() {
+  doGet({parameter: {id: '1V3tIQfbR-PcijnlhmwjNhvwIKJe6njrl'}});
+}
+
+function test_chooseSettingsFile() {
+  chooseSettingsFile_();
 }
 
 function test_download() {

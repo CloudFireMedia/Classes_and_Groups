@@ -1,5 +1,94 @@
 // jshint: 28Oct2019
 
+/*
+
+// Export Events pseudoo-code
+// ==========================
+
+// Variables
+// ---------
+//
+// There are mulitple of the following entities, each which needs to 
+// stepped through (4D array!)
+
+- Calendars: regular or old
+- Events: from C&G GDoc
+- Event types: new, adult Sunday, Hymns, variable
+- Dates: All days starting from C&G doc title
+
+The general idea is to create a list of dates for each calendar, and for 
+each date whether an event type is suspended or not.
+
+// Pseudocode
+// ----------
+
+// Default calendars: The calendar names in the PDC are ignored at the moment,
+// the default calendar listed in the UI is the user's own
+
+// Step 1. Create recurring GCal events in the appropriate calendar
+
+GET regularCalendarName, newCalendarName and ignoreDays from UI
+GET startDate from GDoc title
+FOR EACH eventName IN C&G GDoc
+    IF startDate is NOT one of the ignoreDays
+        GET eventAge from eventName
+        IF eventAge = “new”
+            Create new recurring event from startDate in newCalendarName
+            SET eventType = NEW      
+        ELSE
+            Create new recurring event from startDate in regularCalendarName
+            SET eventType = (SUNDAY OR HYMNS OR VARIABLE)
+        END IF
+    END IF
+END FOR // Each event
+    
+// Step 2. Create a list of all excluded dates, one for each calendar, and 
+// for each date whether a particular event type is suspended or not. 
+
+FOR EACH holidayName in holidays in Col A
+    GET holidayStartDate and holidayEndDate for present year (Col C & D for 2019)
+    FOR EACH date between start and end
+      IF Condition 1 rule (ignore Condition 2 for now) = TRUE THEN
+          FOR EACH eventType (Col T - Y)
+              IF value = 'suspended' THEN
+                  SET "suspended" for this eventType on this date in the 
+                  appropriate calendar list
+              END IF
+          END FOR // Each event type
+      END IF
+   END FOR // Each date
+END FOR // Each holiday
+
+// Step 3. Consolidate the date lists, where suspended supersedes other states.
+// 
+// If there is a date that is covered by two holidays, the event on that
+// date won't run if it is suspended on any of those holidays. For example
+// Adult Sunday School Classes are scheduled for Christmastide on Dec 31st, 
+// but are suspended as Dec 31st is also New Years Eve
+
+FOR EACH calendars date list
+     FOR EACH date in this calendars date list
+         IF this date has been seen before
+             Give "suspended" preference for this date
+         END IF
+    END FOR // each calendars date list
+END FOR // each calendars date list
+
+// Step 4. For each calendar, check if events of a certain type on each date are 
+// suspended, and if so delete the event
+
+FOR EACH calendars date list
+    FOR EACH date in this calendars date list
+        FOR EACH event on that date in this calendar
+            IF eventType is suspended
+                delete the event from the calendar
+            END IF
+        END FOR // each calendar event
+    END FOR // each calendars date list
+END FOR // each calendars date list
+
+*/
+
 /**
  * Show the popup to get the event export config from the user
  */
@@ -44,7 +133,7 @@ function exportEvents_(settings) {
     throw new Error('Multiple calendars called: "' + newCalendar + '"');
   }
     
-  var newEventsCalendar =   newEventsCalendars[0];
+  var newEventsCalendar = newEventsCalendars[0];
   var events = parseEvents();
   var exclusionDates = getExclusionDates(); 
   addEventsToCalendar();

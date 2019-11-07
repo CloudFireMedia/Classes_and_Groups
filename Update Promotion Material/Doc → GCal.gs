@@ -94,6 +94,20 @@ END FOR // each calendars date list
  */
 
 function showExportPopup_() {
+  var doc = Utils.getDoc(TEST_DOC_ID_);
+  var docDate = getDateTimeFromDocTitle_(doc.getName());
+  
+  if (docDate === null) {
+    throw new Error('No date in doc title: [ yyyy.MM.dd ]: ' + doc.getName());
+  }
+  
+  var body = doc.getBody();
+  var paragraphs = body.getParagraphs();
+  
+  if (paragraphs[0].getText() !== 'SUNDAY') {
+    throw new Error('The doc must start with "SUNDAY" as the only word in the first paragraph');
+  }
+
   var calendarNames = CalendarApp.getAllCalendars().map(function(calendar) {
     return calendar.getName();    
   });
@@ -105,7 +119,7 @@ function showExportPopup_() {
     calendars: calendarNames
   };
   
-  var html = template.evaluate().setWidth(520).setHeight(530);
+  var html = template.evaluate().setWidth(520).setHeight(560);
   DocumentApp.getUi().showModalDialog(html, 'Export settings');
   
 } // showExportPopup_()
@@ -115,8 +129,7 @@ function showExportPopup_() {
  */
 
 function exportEvents_(settings) {
-  var logSheet = logInit_();
-  
+
   var regularCalendar = settings.regular_events_calendar;
   var regularEventsCalendars = CalendarApp.getCalendarsByName(regularCalendar);
   
@@ -137,9 +150,11 @@ function exportEvents_(settings) {
   var events = parseEvents();
   var exclusionDates = getExclusionDates(); 
   addEventsToCalendar();
-  excludeEvents([regularEventsCalendar, newEventsCalendar]);  
-  log_(logSheet, 'Finished exporting calendar events');
-  return;
+  excludeEvents([regularEventsCalendar, newEventsCalendar]); 
+  
+  var message = 'Export finished: ' + events.length + ' events created.';
+  Log_.info(message);
+  return message;
   
   // Private Functions
   // -----------------
@@ -157,7 +172,7 @@ function exportEvents_(settings) {
       throw new Error('No date in doc title: [ yyyy.MM.dd ]: ' + doc.getName());
     }
      
-    docDate = checkDocDateIsASunday();
+    docDate = getDateOnThisDay_(docDate, 'Sunday');
     var body = doc.getBody();
     var paragraphs = body.getParagraphs();
     var events = [];
@@ -165,6 +180,10 @@ function exportEvents_(settings) {
     var timeFrame = null;
     var heading3 = null;
     var foundOtherEvents = false;
+    
+    if (paragraphs[0].getText() !== 'SUNDAY') {
+      throw new Error('The doc must start with "SUNDAY" as the only word in the first paragraph');
+    }
     
     paragraphs.forEach(function(paragraph, paragraphIndex) {    
       var text = paragraph.getText().trim();
@@ -239,8 +258,7 @@ function exportEvents_(settings) {
        * inc the date this class is happening on
        */
   
-      function processHeading1() {
-        
+      function processHeading1() {        
         if (eventHeadingDay !== null) {
           docDate.setDate(docDate.getDate() + 1);
         }
@@ -250,8 +268,7 @@ function exportEvents_(settings) {
         
       } // exportEvents_.parseEvents.processDailyEvents.processHeading1
       
-      function processHeading2() {
-        
+      function processHeading2() {        
         var time = text.toUpperCase().trim();
         var finds = time.match(/^([0-9]{1,2})\:([0-9]{1,2})([AM|PM]{2})\s*[–\-]\s*([0-9]{1,2})\:([0-9]{1,2})([AM|PM]{2})$/);    
         var timeFrame;
@@ -310,19 +327,22 @@ function exportEvents_(settings) {
         
         var description = text.trim();
         var paragraphDate = paragraphs[paragraphIndex + 1];
-        var curYear = docDate.getFullYear();
+        var currentYear = docDate.getFullYear();
         var curMonth = docDate.getMonth();
         var curDay = docDate.getDate();
-        
-        var dates = {
-          'start': new Date(curYear, curMonth, curDay, timeFrame.start.hours, timeFrame.start.minutes),
-          'end': new Date(curYear, curMonth, curDay, timeFrame.end.hours, timeFrame.end.minutes)
-        };
-        
-        var conditions;
+        var dates;
+        var conditions = null;
         
         if (paragraphDate.getHeading() === DocumentApp.ParagraphHeading.HEADING6) {
-          processHeading6();
+        
+          [dates, conditions] = processHeading6(docDate, paragraphDate, currentYear, timeFrame);
+          
+        } else {
+        
+          dates = {
+            'start': new Date(currentYear, curMonth, curDay, timeFrame.start.hours, timeFrame.start.minutes),
+            'end': new Date(currentYear, curMonth, curDay, timeFrame.end.hours, timeFrame.end.minutes)
+          };        
         }
                 
         var dayName = DAYS_OF_WEEK_[dates.start.getDay()].toLowerCase();
@@ -333,7 +353,6 @@ function exportEvents_(settings) {
         
         var contactText = '<br><br><b>Contact:</b> ' + CONTACT_NAME_ + ' at ' + 
           '<a href="mailto:' + CONTACT_EMAIL_ + '">' + CONTACT_EMAIL_+ '</a>';
-
         
         if (populateDays.indexOf(dayName) !== -1) {
           events.push({
@@ -347,68 +366,6 @@ function exportEvents_(settings) {
           });
         }
                 
-        return;
-        
-        // Private Functions
-        // -----------------
-        
-        function processHeading6() {
-          
-          var note = paragraphDate.getText().toUpperCase().trim();
-          
-          if (note.indexOf('>>') !== 0) {
-            return;
-          }
-            
-          note = note.substring(3); // Jump past the '>>'
-          
-          // Look for "Starts [month] [day]", e.g. "Start January 4".
-          var finds = note.match(/^STARTS\s*(\w+)\s*([0-9]{1,2})/);
-          
-          if (finds !== null && finds.length === 3) {
-          
-            var month = MONTHS_.indexOf(finds[1].toUpperCase());
-            var day = Number(finds[2]);
-            
-            if (timeFrame === null) {
-              throw new Error('No time frame has been found yet.');
-            }
-            
-            dates = {
-              'start': new Date(curYear, month, day, timeFrame.start.hours, timeFrame.start.minutes),
-              'end': new Date(curYear, month, day, timeFrame.end.hours, timeFrame.end.minutes)
-            };
-          }
-          
-          // Look for "[month] [day] - [month] [day][.|;]", e.g. "April 1 - May 1."
-          finds = note.match(/^(\w+)\s*([0-9]{1,2})\s*[–\-]\s*(\w+)\s*([0-9]{1,2})[.;]{0,1}/);
-          
-          if (finds !== null && finds.length == 5) {
-          
-            var startMonth = MONTHS_.indexOf(finds[1].toUpperCase());
-            var startDay   = Number(finds[2]);
-            var endMonth   = MONTHS_.indexOf(finds[3].toUpperCase());
-            var endDay     = Number(finds[4]);
-            
-            dates = {
-              'start': new Date(curYear, startMonth, startDay, timeFrame.start.hours, timeFrame.start.minutes),
-              'end': new Date(curYear, startMonth, startDay, timeFrame.end.hours, timeFrame.end.minutes),
-              'finish': new Date(curYear, endMonth, endDay)
-            };
-          }
-          
-          // Look for "[number][ST|ND|RD|TH] [day of the week] OF THE MONTH", e.g. "1ST SUNDAY OF THE MONTH". 
-          finds = note.match(/^(([1-4]{1})(ST|ND|RD|TH))\s(SUNDAY|MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY)\sOF\sTHE\sMONTH/);
-          
-          if (finds !== null && finds.length === 5) {
-            conditions = {
-              'queue': Number(finds[2]),
-              'day': finds[4]
-            };
-          }
-  
-        } // exportEvents_.parseEvents.processDailyEvents.processHeading45.processHeading6
-  
       } // exportEvents_.parseEvents.processDailyEvents.processHeading45
   
       function processOtherEvents() {
@@ -454,7 +411,7 @@ function exportEvents_(settings) {
           
           var description = text.trim();
           var paragraphDate = paragraphs[paragraphIndex + 1];
-          var curYear = docDate.getFullYear();
+          var currentYear = docDate.getFullYear();
           var dates = null;
           var month;
           var day;
@@ -478,39 +435,42 @@ function exportEvents_(settings) {
               day = Number(finds[2]);
               
               dates = {
-                'start': new Date(curYear, month, day, 0, 0),
-                'end': new Date(curYear, month, day, 24, 0)
+                'start': new Date(currentYear, month, day, 0, 0),
+                'end': new Date(currentYear, month, day, 24, 0)
               };
+              
+            } else {
+            
+              // Look for "[some text], [month] [day] at [hour]:[minute][am|pm]", e.g. "hello, May 1 at 1:00pm"
+              finds = note.match(/^\w+\,\s*(\w+)\s*([0-9]{1,31})\s*AT\s*(?:([0-9]{1,2})|([0-9]{1,2})\:([0-9]{1,2}))([AM|PM]{2})$/);
+              
+              if (finds !== null && finds.length == 7) {
+              
+                month = MONTHS_.indexOf(finds[1].toUpperCase());
+                
+                if (month === -1) {
+                  throw new Error('Could not find "OTHER EVENTS" month ' + finds[1]);
+                }
+                
+                day = Number(finds[2]);
+                var hours;
+                var minutes = 0;
+                
+                if (finds[3] != null) {
+                  hours = to24Hours_(Number(finds[3]), finds[6]);
+                } else if (finds[4] != null && finds[5] != null) {
+                  hours = to24Hours_(Number(finds[4]), finds[6]);
+                  minutes = finds[5];
+                }
+                
+                dates = {
+                  'start': new Date(currentYear, month, day, hours, minutes),
+                  'end': new Date(currentYear, month, day, (hours + 1), minutes)
+                };
+              }          
             }
             
-            // Look for "[some text], [month] [day] at [hour]:[minute][am|pm]", e.g. "hello, May 1 at 1:00pm"
-            finds = note.match(/^\w+\,\s*(\w+)\s*([0-9]{1,31})\s*AT\s*(?:([0-9]{1,2})|([0-9]{1,2})\:([0-9]{1,2}))([AM|PM]{2})$/);
-            
-            if (finds !== null && finds.length == 7) {
-            
-              month = MONTHS_.indexOf(finds[1].toUpperCase());
-              
-              if (month === -1) {
-                throw new Error('Could not find "OTHER EVENTS" month ' + finds[1]);
-              }
-              
-              day = Number(finds[2]);
-              var hours;
-              var minutes = 0;
-              
-              if (finds[3] != null) {
-                hours = to24Hours_(Number(finds[3]), finds[6]);
-              } else if (finds[4] != null && finds[5] != null) {
-                hours = to24Hours_(Number(finds[4]), finds[6]);
-                minutes = finds[5];
-              }
-              
-              dates = {
-                'start': new Date(curYear, month, day, hours, minutes),
-                'end': new Date(curYear, month, day, (hours + 1), minutes)
-              };
-            }          
-          }
+          } // heading 6
           
           if (dates !== null) {
           
@@ -530,7 +490,7 @@ function exportEvents_(settings) {
             
           } else {
           
-            log_(logSheet, 'No dates assigned for "' + description + '"');
+            Log_.info('No dates assigned for "' + description + '"');
           }
           
         } // exportEvents_.parseEvents.processOtherEvents.processHeading45()
@@ -541,33 +501,9 @@ function exportEvents_(settings) {
     
     return events;
     
-    // Private Functions
-    // -----------------
-    
-    /**
-    * If the start date in the script is not a Sunday, the script should 
-    * take the first upcoming Sunday as the start date for populating 
-    * events on Calendar.
-    */
-    
-    function checkDocDateIsASunday() {
-      var newDocDate = docDate;
-      var day = newDocDate.getDay();
-      var offset = 0;
-      while (day !== 0) {
-        offset++;
-        newDocDate = new Date(docDate.getYear(), docDate.getMonth(), docDate.getDate() + offset);
-        day = newDocDate.getDay();
-      }
-      log_(logSheet, 'Updated docDate to ' + newDocDate);
-      return newDocDate;
-      
-    } // exportEvents_.parseEvents.checkDocDateIsASunday()
-    
   } // exportEvents_.parseEvents()
 
   function addEventsToCalendar() {
-    var logSheet = logInit_();
     var recurrence;
   
     for (var index in events) {
@@ -585,7 +521,7 @@ function exportEvents_(settings) {
       
       switch (event.recurrence) {
         case 'MONTHLY': {
-          if (event.conditions != null) {
+          if (event.conditions !== null) {
             recurrence = CalendarApp.newRecurrence().addWeeklyRule();
             var startDay = (7 * (event.conditions.queue - 1));
             var excludeDays = [];
@@ -613,8 +549,7 @@ function exportEvents_(settings) {
             options
           );
 
-          log('Created monthly event series "' + event.title + '"');
-
+          Log_.info('Created monthly event series "' + event.title + '"');
           break;
         }
         case 'WEEKLY': {
@@ -632,8 +567,7 @@ function exportEvents_(settings) {
             options
           );
           
-          log('Created weekly event series "' + event.title + '"');
-          
+          Log_.info('Created weekly event series "' + event.title + '"');          
           break;
         }
         case 'ONCE': {
@@ -644,8 +578,7 @@ function exportEvents_(settings) {
             options
           );
 
-          log('Created one off event "' + event.title + '"');
-
+          Log_.info('Created one off event "' + event.title + '"');
           break;
         }
         default: {
@@ -656,17 +589,10 @@ function exportEvents_(settings) {
       
     } // for each event
     
-    // Private Functions
-    // -----------------
-    
-    function log(message) {
-      log_(logSheet, message);
-    }
-    
   } // exportEvents_.addEventsToCalendar()
   
   function getExclusionDates() {
-    var doc = Utils.getDoc();    
+    var doc = Utils.getDoc(TEST_DOC_ID_);    
     var docDate = getDateTimeFromDocTitle_(doc.getName());
         
     if (docDate === null) {
@@ -728,10 +654,127 @@ function exportEvents_(settings) {
       calendars.forEach(function(calendar) {
 		calendar.getEventsForDay(date).forEach(function(event) {
           event.deleteEvent();
-          log_(logInit_(), 'Removed event for ' + date);
+          Log_.info('Removed event for ' + date);
         });
       });
     }); 
   } // exportEvents_.excludeEvents()
+  
+  /**
+   * This is really private to parseEvents() but the indentation was 
+   * getting too deep
+   */
+      
+  function processHeading6(docDate, paragraphDate, currentYear, timeFrame) {
+    
+    Log_.fine('docDate: ' + docDate);
+    Log_.fine('currentYear: ' + currentYear);
+    Log_.fine('timeFrame: %s', timeFrame);
+    
+    var note = paragraphDate.getText().toUpperCase().trim();
+    Log_.fine('note: ' + note);
+
+    if (note.indexOf('>>') !== 0) {
+      return;
+    }
+    
+    note = note.substring(3); // Jump past the '>>'
+    
+    var dates = {};
+    var conditions = null;
+    
+    // Look for "Starts [month] [day]", e.g. "Start January 4".
+    var finds = note.match(/^STARTS\s*(\w+)\s*([0-9]{1,2})/);
+    
+    if (finds !== null && finds.length === 3) {
+      
+      var month = MONTHS_.indexOf(finds[1].toUpperCase());
+      var day = Number(finds[2]);
+      
+      if (timeFrame === null) {
+        throw new Error('No time frame has been found yet.');
+      }
+      
+      dates = {
+        'start': new Date(currentYear, month, day, timeFrame.start.hours, timeFrame.start.minutes),
+        'end': new Date(currentYear, month, day, timeFrame.end.hours, timeFrame.end.minutes)
+      };
+      
+    } else {
+      
+      // Look for "[month] [day] - [month] [day][.|;]", e.g. "April 1 - May 1."
+      finds = note.match(/^(\w+)\s*([0-9]{1,2})\s*[–\-]\s*(\w+)\s*([0-9]{1,2})[.;]{0,1}/);
+      
+      if (finds !== null && finds.length === 5) {
+        
+        var startMonth = MONTHS_.indexOf(finds[1].toUpperCase());
+        var startDayOfMonth = Number(finds[2]);
+        var endMonth = MONTHS_.indexOf(finds[3].toUpperCase());
+        var endDayOfMonth = Number(finds[4]);
+        
+        // Find the first date on this day after "start"
+        
+        var presentStartDate = new Date(currentYear, startMonth, startDayOfMonth);
+        
+        if (presentStartDate < docDate) {
+        
+          throw new Error(
+            'The start date in range "' + note + '" is earlier that the title date of ' + docDate);
+        }
+        
+        var updatedStartDate = getDateOnThisDay_(presentStartDate, docDate.getDay());
+        
+        updatedStartDate = new Date(
+          updatedStartDate.getYear(), 
+          updatedStartDate.getMonth(),
+          updatedStartDate.getDate(),
+          timeFrame.start.hours, 
+          timeFrame.start.minutes);
+        
+        var updatedEndDate = new Date(
+          updatedStartDate.getYear(), 
+          updatedStartDate.getMonth(),
+          updatedStartDate.getDate(),
+          timeFrame.end.hours, 
+          timeFrame.end.minutes);
+        
+        // Find the last date on this day before it should finish
+        
+        var presentFinishDate = new Date(currentYear, endMonth, endDayOfMonth);
+        
+        var GO_BACKWARDS = true;
+        var updatedFinishDate = getDateOnThisDay_(presentFinishDate, docDate.getDay(), GO_BACKWARDS);
+        
+        updatedFinishDate = new Date(
+          updatedFinishDate.getYear(), 
+          updatedFinishDate.getMonth(),
+          updatedFinishDate.getDate());
+        
+        dates = {
+          'start':  updatedStartDate,
+          'end':    updatedEndDate,
+          'finish': updatedFinishDate
+        };
+        
+      } else {
+        
+        // Look for "[number][ST|ND|RD|TH] [day of the week] OF THE MONTH", e.g. "1ST SUNDAY OF THE MONTH". 
+        finds = note.match(/^(([1-4]{1})(ST|ND|RD|TH))\s(SUNDAY|MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY)\sOF\sTHE\sMONTH/);
+        
+        if (finds !== null && finds.length === 5) {
+          conditions = {
+            'queue': Number(finds[2]),
+            'day': finds[4]
+          };
+        }
+      } 
+    }
+    
+    Log_.fine('dates: %s', dates);
+    Log_.fine('conditions: %s', conditions);
+    
+    return [dates, conditions];
+    
+  } // exportEvents_.processHeading6()
       
 } // exportEvents_()

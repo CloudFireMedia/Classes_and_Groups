@@ -6,7 +6,7 @@
  */
 
 function setTrigger_() {
-  var title = Utils.getDoc().getName();
+  var title = Utils.getDoc(TEST_DOC_ID_).getName();
   var date = getDateTimeFromDocTitle_(title);
     
   if (date === null) {  
@@ -28,7 +28,6 @@ function setTrigger_() {
  */
 
 function changeFilename_() {
-  var logSheet = logInit_();
   var doc = DocumentApp.openById(Config.get('CLASSES_AND_GROUPS_DOCUMENT_ID'));
   var docTitle = doc.getName();
   var dateOnPresentDoc = getDateTimeFromDocTitle_(docTitle);
@@ -63,7 +62,7 @@ function changeFilename_() {
         'Classes + Groups_Booklet';
       
       doc.setName(newTitle);
-      log_(logSheet, 'Renamed GDoc to "' + newTitle + '"');
+      Log_.info('Renamed GDoc to "' + newTitle + '"');
       
       createChangeFilenameTrigger_(
         date.getYear(), 
@@ -119,8 +118,7 @@ function changeFilename_() {
  */
 
 function createChangeFilenameTrigger_(year, month, dayOfMonth) {
-  var logSheet = logInit_();
-  log_(logSheet, year + '-' + month + '-' + dayOfMonth);
+  Log_.info(year + '-' + month + '-' + dayOfMonth);
 
   deleteExistingChangeFilenameTriggers_();  
  
@@ -143,12 +141,11 @@ function createChangeFilenameTrigger_(year, month, dayOfMonth) {
   // -----------------
   
   function deleteExistingChangeFilenameTriggers_() {  
-    var logSheet = logInit_();
     ScriptApp.getProjectTriggers().forEach(function(trigger) {
       if (trigger.getHandlerFunction() === 'changeFilename') {
         var id = trigger.getUniqueId();
         ScriptApp.deleteTrigger(trigger);
-        log_(logSheet, 'Deleted "changeFilename()" trigger ' + id);
+        Log_.info('Deleted "changeFilename()" trigger ' + id);
       }
     });
     

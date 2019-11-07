@@ -1,7 +1,5 @@
 
 function getDateTimeFromDocTitle_(title) {
-  var logSheet = logInit_();
-  
   var dateInTitleArray = title.match(/\[\s*(\d+)\.(\d+)\.(\d+)\s*\]/);
   
   if (dateInTitleArray === null || dateInTitleArray.length !== 4) {
@@ -18,31 +16,21 @@ function getDateTimeFromDocTitle_(title) {
   }
   
   var date = new Date(year, month - 1, day); 
-  log_(logSheet, 'Got date ' + date + ' from doc title');
+  Log_.info('Got date ' + date + ' from doc title');
   return date;
 }
 
-function logInit_() {
-  var logSheetId = Config.get('CLASSES_AND_GROUPS_LOG_ID');
-  return SpreadsheetApp.openById(logSheetId).getSheetByName('Log');
-}
-
-function log_(logSheet, message) {
-  logSheet.appendRow([new Date(), message]);
-}
-
 function alert_(title, prompt) {
-  var logSheet = logInit_();  
   var ui = Utils.getUi();
   
   if (ui !== null) {
     ui.alert(title, prompt, ui.ButtonSet.OK);
   }
   
-  log_(logSheet, prompt);
+  Log_.info(prompt);
 }
 
-function openWindow_(url) {
+function openWindow_(url, text) {
   var js = 
       "<script>" +
       "window.open('" + url + "'); " +
@@ -53,7 +41,7 @@ function openWindow_(url) {
     .setHeight(10)
     .setWidth(100);
           
-  DocumentApp.getUi().showModalDialog(html, 'Downloading file, please wait....');
+  DocumentApp.getUi().showModalDialog(html, text);
 } 
 
 function to24Hours_(hours, period) {
@@ -75,3 +63,51 @@ function isInArray_(arr, obj) {
   return false;
   
 } // isInArray_()
+
+/**
+ * If the original date in the script is not the required day of the week, the 
+ * look backwards or forwards in time.
+ *
+ * @param {Date} originalDate
+ * @param {string || number} dayOfTheWeek
+ * @param {boolean} forwards [OPTIONAL, DEFAULT true]
+ *
+ * @return {Date} new date
+ */
+
+function getDateOnThisDay_(originalDate, dayOfTheWeek, forwards) {
+
+  if (forwards === undefined) {
+    forwards = true;
+  }
+  
+  // Assume it is a number
+  var dayOfTheWeekIndex = dayOfTheWeek;
+  
+  if (typeof dayOfTheWeek === 'string') {
+  
+    dayOfTheWeekIndex = DAYS_OF_WEEK_
+      .indexOf(
+       dayOfTheWeek.trim().toUpperCase())
+  }
+  
+  var nextDate = originalDate;
+  var nextDay = nextDate.getDay();
+  var offset = 0;
+  
+  while (nextDay !== dayOfTheWeekIndex) {
+  
+    forwards ? offset++ : offset--;
+    
+    nextDate = new Date(
+      originalDate.getYear(), 
+      originalDate.getMonth(), 
+      originalDate.getDate() + offset);
+           
+    nextDay = nextDate.getDay();
+  }
+  
+  Log_.fine('nextDate: ' + nextDate);
+  return nextDate;
+  
+} // getDateOnThisDay_()

@@ -26,7 +26,7 @@ function chooseSettingsFile_() {
   } else {
 
     url = TEST_SIGNAGE_SHEET_URL_;
-    log_(logInit_(), '!!!! WARNING - Using test signage sheet !!!!')
+    Log_.warning('Using test signage sheet');
   }
   
   var settings = {};
@@ -60,7 +60,7 @@ function chooseSettingsFile_() {
   // -----------------
   
   function ConvertToJson(settings) {
-    var doc = Utils.getDoc();
+    var doc = Utils.getDoc(TEST_DOC_ID_);
     var body = doc.getBody();
     var paragraphs = body.getParagraphs();   
     var filename = 'IMPORT ' + doc.getName().split('.')[0].slice(2) + '.json'; // Expecting "[ YYYYY.MM.dd ] ...";    
@@ -169,7 +169,7 @@ function chooseSettingsFile_() {
     var content = JSON.stringify(result);
     var file = DriveApp.createFile(filename, content, MimeType.JAVASCRIPT);
     
-    openWindow_(DOWNLOAD_URL_ + '?id=' + file.getId());
+    openWindow_(DOWNLOAD_URL_ + '?id=' + file.getId(), 'Downloading file, please wait....');
     
   } // chooseSettingsFile_.ConvertToJson()
 

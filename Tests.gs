@@ -1,8 +1,23 @@
 
 function test_misc() {
-  var doc = DocumentApp.openById('12twNDzyMBA0iHmqm79Vr0KIU8O35wklvWWlJogKC3-g')
-  var a = 'IMPORT ' + doc.getName().split('\\.')[0] + '.json';
+  var a = new Date(2019,11,1)
+  var b = new Date(2019,11,2)
+  if (a > b) {throw 'STOP'}
   return
+}
+
+function test_getDateOnThisDay() {
+  var a = getDateOnThisDay_(new Date(2019, 10, 7), 'Sunday', true);
+  return
+}
+
+function test_exportEvents() {
+  var settings = {
+    populate_days:           ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"], 
+    new_events_calendar:     "andrew@cloudfire.media", 
+    regular_events_calendar: "andrew@cloudfire.media"
+  }
+  exportEvents_(settings)
 }
 
 function test_doGet() {
@@ -32,15 +47,6 @@ function test_toSentenceCase() {
   return
 }
 
-function test_exportEvents() {
-  var settings = {
-    populate_days:           ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"], 
-    new_events_calendar:     "andrew@cloudfire.media", 
-    regular_events_calendar: "andrew@cloudfire.media"
-  }
-  exportEvents_(settings)
-}
-
 function test_formatDoc() {
   formatDoc_()
   return
@@ -50,10 +56,8 @@ function test_DeleteEvents() {
 
   var startTime = new Date(2019,9,1)
   var endTime = new Date(2020,0,31)
-  var events = CalendarApp.getCalendarsByName("andrew@cloudfire.media")[0].getEvents(startTime, endTime)
-  var logSheet = logInit_()
-  
-  log_(logSheet, 'events: '+ events.length)
+  var events = CalendarApp.getCalendarsByName("andrew@cloudfire.media")[0].getEvents(startTime, endTime)  
+  Log_.info('events: '+ events.length)
 
 //  deleteEvents_(["andrew@cloudfire.media"])
   
@@ -65,10 +69,10 @@ function test_DeleteEvents() {
 
       if (event.isRecurringEvent()) {
         event.getEventSeries().deleteEventSeries();
-        log_(logSheet, 'Deleted event series"' + name + '" (' + event.getStartTime() + ')');    
+        Log_.info('Deleted event series"' + name + '" (' + event.getStartTime() + ')');    
       } else {
         event.deleteEvent();
-        log_(logSheet, 'Deleted event "' + name + '" (' + event.getStartTime() + ')');
+        Log_.info('Deleted event "' + name + '" (' + event.getStartTime() + ')');
       }    
     });
     

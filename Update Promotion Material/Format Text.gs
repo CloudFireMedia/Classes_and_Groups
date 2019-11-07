@@ -1,7 +1,7 @@
 // jshint - 28Oct2019
 
 function formatDoc_() {
-  var body = Utils.getDoc().getBody();
+  var body = Utils.getDoc(TEST_DOC_ID_).getBody();
   var paragraphs = body.getParagraphs();
   
   paragraphs.forEach(function(paragraph, paragraphIndex) {
@@ -23,8 +23,8 @@ function formatDoc_() {
     if ((justASingleWord && isFirstWordDayOfWeek) || (firstTwoWords === 'OTHER EVENTS')) {
 
       // Day of week or "Other Events" title
-      setStyle(BOLD, 30, NOT_ITALIC, 'Lato', 'HEADING1');
       paragraph.editAsText().setText(text.toUpperCase());
+      setStyle(BOLD, 30, NOT_ITALIC, 'Lato', 'HEADING1');
            
     } else if (isTimeString) {
 

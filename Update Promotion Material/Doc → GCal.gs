@@ -148,7 +148,6 @@ function exportEvents_(settings) {
     
   var newEventsCalendar = newEventsCalendars[0];
   var events = parseEvents();
-  var exclusionDates = getExclusionDates(); 
   addEventsToCalendar();
   excludeEvents([regularEventsCalendar, newEventsCalendar]); 
   
@@ -217,34 +216,35 @@ function exportEvents_(settings) {
             break;
           }
             /* Heading 4 = event description paragraph NOT immediately followed by an event details paragraph.
-
-                Example:
-
-                Tuesday Morning Prayer Group | Room 123
-                Come to pray and to receive prayer.
-                Show less
-          
+            
+            Example:
+            
+            Tuesday Morning Prayer Group | Room 123
+            Come to pray and to receive prayer.
+            Show less
+            
             Heading 5 = 'event description paragraph' immediately followed by an 'event details paragraph' (Heading 6).
-
-                Example:
-
-                Midweek Hymns + Teaching | Prayer Tower
-                All are welcome to join our senior community for a service of hymn singing and biblical teaching from our pastoral staff.
-                >> Ongoing
-             */          
+            
+            Example:
+            
+            Midweek Hymns + Teaching | Prayer Tower
+            All are welcome to join our senior community for a service of hymn singing and biblical teaching from our pastoral staff.
+            >> Ongoing
+            */          
           case DocumentApp.ParagraphHeading.HEADING4:
           case DocumentApp.ParagraphHeading.HEADING5: {
             processHeading45();
             break;
           }
-          
+            
           case DocumentApp.ParagraphHeading.HEADING6: {
             // Heading 6 is dealt with in processHeading45()
             break;
           }
-          
-          default:
+            
+          default: {
             throw new Error('Unexpected format: ' +  heading);
+          }
           
         } // switch (heading)
         
@@ -591,65 +591,8 @@ function exportEvents_(settings) {
     
   } // exportEvents_.addEventsToCalendar()
   
-  function getExclusionDates() {
-    var doc = Utils.getDoc(TEST_DOC_ID_);    
-    var docDate = getDateTimeFromDocTitle_(doc.getName());
-        
-    if (docDate === null) {
-      throw new Error('No date in doc title: [ yyyy.MM.dd ]: ' + doc.getName());
-    }
- 
-    var docYear = docDate.getYear();
-    
-    if (docYear !== 2019 && docYear !== 2020) {
-      throw new Error('"Exclude dates" only support 2019 and 2020 at the moment');
-    }
-            
-    var ss = SpreadsheetApp.openById(Config.get('PROMOTION_DEADLINES_CALENDAR_ID'));
-    var sheet = ss.getSheetByName('Calendar Exceptions');
-    var holidays = sheet.getRange('A6:A').getValues();
-    var startDatesRange = (docYear === 2019) ? 'C6:C' : 'F6:F';
-    var startDates = sheet.getRange(startDatesRange).getValues(); 
-    var endDatesRange = (docYear === 2019) ? 'D6:D' : 'G6:G';    
-    var endDates = sheet.getRange(endDatesRange).getValues();
-    var statuses = sheet.getRange('T6:T').getValues();
-    var excludedDates = [];
-    
-    // Create and array of all the excluded dates (with duplicates)
-    holidays.forEach(function(holiday, rowIndex) {
-      if (statuses[rowIndex][0] === 'suspended') {
-        var startDate = startDates[rowIndex][0];
-        var endDate = endDates[rowIndex][0];        
-        var nextDate = startDate;        
-        do {
-          excludedDates.push(nextDate);
-          nextDate = new Date(nextDate.getYear(), nextDate.getMonth(), nextDate.getDate() + 1);
-        } while (nextDate < endDate); 
-      }
-    });
-    
-    // Remove duplicates
-    var unique = {};
-    excludedDates.forEach(function(date) {
-      if(!unique.hasOwnProperty(date)) {
-        unique[date] = date;
-      }
-    });
-    
-    var uniqueArray = [];
-    
-    for (var key in unique) {    
-      if (!unique.hasOwnProperty(key)) {
-        continue;
-      }
-      uniqueArray.push(unique[key]);
-    }
-    
-    return uniqueArray;
-    
-  } // exportEvents_.getExclusionDates()
-
   function excludeEvents(calendars) {
+    var exclusionDates = getExclusionDates(); 
     exclusionDates.forEach(function(date) {
       calendars.forEach(function(calendar) {
 		calendar.getEventsForDay(date).forEach(function(event) {
@@ -658,6 +601,70 @@ function exportEvents_(settings) {
         });
       });
     }); 
+    
+    return;
+    
+    // Private Functions
+    // -----------------
+    
+    function getExclusionDates() {
+      var doc = Utils.getDoc(TEST_DOC_ID_);    
+      var docDate = getDateTimeFromDocTitle_(doc.getName());
+          
+      if (docDate === null) {
+        throw new Error('No date in doc title: [ yyyy.MM.dd ]: ' + doc.getName());
+      }
+   
+      var docYear = docDate.getYear();
+      
+      if (docYear !== 2019 && docYear !== 2020) {
+        throw new Error('"Exclude dates" only support 2019 and 2020 at the moment');
+      }
+              
+      var ss = SpreadsheetApp.openById(Config.get('PROMOTION_DEADLINES_CALENDAR_ID'));
+      var sheet = ss.getSheetByName('Calendar Exceptions');
+      var holidays = sheet.getRange('A6:A').getValues();
+      var startDatesRange = (docYear === 2019) ? 'C6:C' : 'F6:F';
+      var startDates = sheet.getRange(startDatesRange).getValues(); 
+      var endDatesRange = (docYear === 2019) ? 'D6:D' : 'G6:G';    
+      var endDates = sheet.getRange(endDatesRange).getValues();
+      var statuses = sheet.getRange('T6:T').getValues();
+      var excludedDates = [];
+      
+      // Create and array of all the excluded dates (with duplicates)
+      holidays.forEach(function(holiday, rowIndex) {
+        if (statuses[rowIndex][0] === 'suspended') {
+          var startDate = startDates[rowIndex][0];
+          var endDate = endDates[rowIndex][0];        
+          var nextDate = startDate;        
+          do {
+            excludedDates.push(nextDate);
+            nextDate = new Date(nextDate.getYear(), nextDate.getMonth(), nextDate.getDate() + 1);
+          } while (nextDate < endDate); 
+        }
+      });
+      
+      // Remove duplicates
+      var unique = {};
+      excludedDates.forEach(function(date) {
+        if(!unique.hasOwnProperty(date)) {
+          unique[date] = date;
+        }
+      });
+      
+      var uniqueArray = [];
+      
+      for (var key in unique) {    
+        if (!unique.hasOwnProperty(key)) {
+          continue;
+        }
+        uniqueArray.push(unique[key]);
+      }
+      
+      return uniqueArray;
+      
+    } // exportEvents_.excludeEvents.getExclusionDates()
+    
   } // exportEvents_.excludeEvents()
   
   /**

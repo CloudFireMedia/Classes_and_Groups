@@ -1,94 +1,5 @@
 // jshint: 28Oct2019
 
-/*
-
-// Export Events pseudoo-code
-// ==========================
-
-// Variables
-// ---------
-//
-// There are mulitple of the following entities, each which needs to 
-// stepped through (4D array!)
-
-- Calendars: regular or old
-- Events: from C&G GDoc
-- Event types: new, adult Sunday, Hymns, variable
-- Dates: All days starting from C&G doc title
-
-The general idea is to create a list of dates for each calendar, and for 
-each date whether an event type is suspended or not.
-
-// Pseudocode
-// ----------
-
-// Default calendars: The calendar names in the PDC are ignored at the moment,
-// the default calendar listed in the UI is the user's own
-
-// Step 1. Create recurring GCal events in the appropriate calendar
-
-GET regularCalendarName, newCalendarName and ignoreDays from UI
-GET startDate from GDoc title
-FOR EACH eventName IN C&G GDoc
-    IF startDate is NOT one of the ignoreDays
-        GET eventAge from eventName
-        IF eventAge = “new”
-            Create new recurring event from startDate in newCalendarName
-            SET eventType = NEW      
-        ELSE
-            Create new recurring event from startDate in regularCalendarName
-            SET eventType = (SUNDAY OR HYMNS OR VARIABLE)
-        END IF
-    END IF
-END FOR // Each event
-    
-// Step 2. Create a list of all excluded dates, one for each calendar, and 
-// for each date whether a particular event type is suspended or not. 
-
-FOR EACH holidayName in holidays in Col A
-    GET holidayStartDate and holidayEndDate for present year (Col C & D for 2019)
-    FOR EACH date between start and end
-      IF Condition 1 rule (ignore Condition 2 for now) = TRUE THEN
-          FOR EACH eventType (Col T - Y)
-              IF value = 'suspended' THEN
-                  SET "suspended" for this eventType on this date in the 
-                  appropriate calendar list
-              END IF
-          END FOR // Each event type
-      END IF
-   END FOR // Each date
-END FOR // Each holiday
-
-// Step 3. Consolidate the date lists, where suspended supersedes other states.
-// 
-// If there is a date that is covered by two holidays, the event on that
-// date won't run if it is suspended on any of those holidays. For example
-// Adult Sunday School Classes are scheduled for Christmastide on Dec 31st, 
-// but are suspended as Dec 31st is also New Years Eve
-
-FOR EACH calendars date list
-     FOR EACH date in this calendars date list
-         IF this date has been seen before
-             Give "suspended" preference for this date
-         END IF
-    END FOR // each calendars date list
-END FOR // each calendars date list
-
-// Step 4. For each calendar, check if events of a certain type on each date are 
-// suspended, and if so delete the event
-
-FOR EACH calendars date list
-    FOR EACH date in this calendars date list
-        FOR EACH event on that date in this calendar
-            IF eventType is suspended
-                delete the event from the calendar
-            END IF
-        END FOR // each calendar event
-    END FOR // each calendars date list
-END FOR // each calendars date list
-
-*/
-
 /**
  * Show the popup to get the event export config from the user
  */
@@ -148,7 +59,6 @@ function exportEvents_(settings) {
     
   var newEventsCalendar = newEventsCalendars[0];
   var events = parseEvents();
-  var exclusionDates = getExclusionDates(); 
   addEventsToCalendar();
   excludeEvents([regularEventsCalendar, newEventsCalendar]); 
   
@@ -187,6 +97,7 @@ function exportEvents_(settings) {
     
     paragraphs.forEach(function(paragraph, paragraphIndex) {    
       var text = paragraph.getText().trim();
+      Log_.fine('Paragraph: "' + text + '"'); 
       var heading = paragraph.getHeading();
       
       if (text.toUpperCase() === 'OTHER EVENTS') {
@@ -217,34 +128,35 @@ function exportEvents_(settings) {
             break;
           }
             /* Heading 4 = event description paragraph NOT immediately followed by an event details paragraph.
-
-                Example:
-
-                Tuesday Morning Prayer Group | Room 123
-                Come to pray and to receive prayer.
-                Show less
-          
+            
+            Example:
+            
+            Tuesday Morning Prayer Group | Room 123
+            Come to pray and to receive prayer.
+            Show less
+            
             Heading 5 = 'event description paragraph' immediately followed by an 'event details paragraph' (Heading 6).
-
-                Example:
-
-                Midweek Hymns + Teaching | Prayer Tower
-                All are welcome to join our senior community for a service of hymn singing and biblical teaching from our pastoral staff.
-                >> Ongoing
-             */          
+            
+            Example:
+            
+            Midweek Hymns + Teaching | Prayer Tower
+            All are welcome to join our senior community for a service of hymn singing and biblical teaching from our pastoral staff.
+            >> Ongoing
+            */          
           case DocumentApp.ParagraphHeading.HEADING4:
           case DocumentApp.ParagraphHeading.HEADING5: {
             processHeading45();
             break;
           }
-          
+            
           case DocumentApp.ParagraphHeading.HEADING6: {
             // Heading 6 is dealt with in processHeading45()
             break;
           }
-          
-          default:
+            
+          default: {
             throw new Error('Unexpected format: ' +  heading);
+          }
           
         } // switch (heading)
         
@@ -328,10 +240,10 @@ function exportEvents_(settings) {
         var description = text.trim();
         var paragraphDate = paragraphs[paragraphIndex + 1];
         var currentYear = docDate.getFullYear();
-        var curMonth = docDate.getMonth();
-        var curDay = docDate.getDate();
-        var dates;
+        var currentMonth = docDate.getMonth();
+        var currentDay = docDate.getDate();
         var conditions = null;
+        var dates;
         
         if (paragraphDate.getHeading() === DocumentApp.ParagraphHeading.HEADING6) {
         
@@ -340,9 +252,17 @@ function exportEvents_(settings) {
         } else {
         
           dates = {
-            'start': new Date(currentYear, curMonth, curDay, timeFrame.start.hours, timeFrame.start.minutes),
-            'end': new Date(currentYear, curMonth, curDay, timeFrame.end.hours, timeFrame.end.minutes)
+            'start': new Date(currentYear, currentMonth, currentDay, timeFrame.start.hours, timeFrame.start.minutes),
+            'end': new Date(currentYear, currentMonth, currentDay, timeFrame.end.hours, timeFrame.end.minutes)
           };        
+        }
+                
+        if (dates === null) {
+        
+          dates = {
+            'start': new Date(currentYear, currentMonth, currentDay, timeFrame.start.hours, timeFrame.start.minutes),
+            'end': new Date(currentYear, currentMonth, currentDay, timeFrame.end.hours, timeFrame.end.minutes)
+          };
         }
                 
         var dayName = DAYS_OF_WEEK_[dates.start.getDay()].toLowerCase();
@@ -541,44 +461,71 @@ function exportEvents_(settings) {
             }
           }
           
-          calendar.createEventSeries(
-            event.title,
-            event.dates.start,
-            event.dates.end,
-            recurrence,
-            options
-          );
+          if (TEST_CREATE_EVENTS_) {
+          
+            calendar.createEventSeries(
+              event.title,
+              event.dates.start,
+              event.dates.end,
+              recurrence,
+              options
+            );
+            
+            Log_.info('Created monthly event series "' + event.title + '"');
+              
+          } else {
+            
+            Log_.warning('Event create disabled "' + event.title + '"');
+          }
 
-          Log_.info('Created monthly event series "' + event.title + '"');
           break;
         }
+        
         case 'WEEKLY': {
           recurrence = CalendarApp.newRecurrence().addWeeklyRule();
           
           if (event.dates.finish != null) {
             recurrence.until(event.dates.finish);
           }
+
+          if (TEST_CREATE_EVENTS_) {
+
+            calendar.createEventSeries(
+              event.title,
+              event.dates.start,
+              event.dates.end,
+              recurrence,
+              options
+            );
+ 
+            Log_.info('Created weekly event series "' + event.title + '"');          
+ 
+          } else {
+            
+            Log_.warning('Event create disabled "' + event.title + '"');
+          }
           
-          calendar.createEventSeries(
-            event.title,
-            event.dates.start,
-            event.dates.end,
-            recurrence,
-            options
-          );
-          
-          Log_.info('Created weekly event series "' + event.title + '"');          
           break;
         }
+        
         case 'ONCE': {
-          calendar.createEvent(
-            event.title,
-            event.dates.start,
-            event.dates.end,
-            options
-          );
+        
+          if (TEST_CREATE_EVENTS_) {
+       
+            calendar.createEvent(
+              event.title,
+              event.dates.start,
+              event.dates.end,
+              options
+            );
+            
+            Log_.info('Created one off event "' + event.title + '"');
 
-          Log_.info('Created one off event "' + event.title + '"');
+          } else {
+            
+            Log_.warning('Event create disabled "' + event.title + '"');
+          }
+
           break;
         }
         default: {
@@ -591,73 +538,181 @@ function exportEvents_(settings) {
     
   } // exportEvents_.addEventsToCalendar()
   
-  function getExclusionDates() {
-    var doc = Utils.getDoc(TEST_DOC_ID_);    
-    var docDate = getDateTimeFromDocTitle_(doc.getName());
-        
-    if (docDate === null) {
-      throw new Error('No date in doc title: [ yyyy.MM.dd ]: ' + doc.getName());
-    }
- 
-    var docYear = docDate.getYear();
-    
-    if (docYear !== 2019 && docYear !== 2020) {
-      throw new Error('"Exclude dates" only support 2019 and 2020 at the moment');
-    }
-            
-    var ss = SpreadsheetApp.openById(Config.get('PROMOTION_DEADLINES_CALENDAR_ID'));
-    var sheet = ss.getSheetByName('Calendar Exceptions');
-    var holidays = sheet.getRange('A6:A').getValues();
-    var startDatesRange = (docYear === 2019) ? 'C6:C' : 'F6:F';
-    var startDates = sheet.getRange(startDatesRange).getValues(); 
-    var endDatesRange = (docYear === 2019) ? 'D6:D' : 'G6:G';    
-    var endDates = sheet.getRange(endDatesRange).getValues();
-    var statuses = sheet.getRange('T6:T').getValues();
-    var excludedDates = [];
-    
-    // Create and array of all the excluded dates (with duplicates)
-    holidays.forEach(function(holiday, rowIndex) {
-      if (statuses[rowIndex][0] === 'suspended') {
-        var startDate = startDates[rowIndex][0];
-        var endDate = endDates[rowIndex][0];        
-        var nextDate = startDate;        
-        do {
-          excludedDates.push(nextDate);
-          nextDate = new Date(nextDate.getYear(), nextDate.getMonth(), nextDate.getDate() + 1);
-        } while (nextDate < endDate); 
-      }
-    });
-    
-    // Remove duplicates
-    var unique = {};
-    excludedDates.forEach(function(date) {
-      if(!unique.hasOwnProperty(date)) {
-        unique[date] = date;
-      }
-    });
-    
-    var uniqueArray = [];
-    
-    for (var key in unique) {    
-      if (!unique.hasOwnProperty(key)) {
-        continue;
-      }
-      uniqueArray.push(unique[key]);
-    }
-    
-    return uniqueArray;
-    
-  } // exportEvents_.getExclusionDates()
-
   function excludeEvents(calendars) {
+  
+    var exclusionDates = getExclusionDates();   
+    
     exclusionDates.forEach(function(date) {
       calendars.forEach(function(calendar) {
-		calendar.getEventsForDay(date).forEach(function(event) {
-          event.deleteEvent();
-          Log_.info('Removed event for ' + date);
+		calendar.getEventsForDay(date).forEach(function(event) {        
+          if (TEST_DELETE_EVENTS_) {
+            event.deleteEvent();
+            Log_.info('Deleted event"' + name + '" (' + day + ')');  
+          } else {
+            Log_.warning('Event delete disabled: ' + event.getTitle());
+          }
         });
       });
-    }); 
+    });     
+    return;
+    
+    // Private Functions
+    // -----------------
+    
+    function getExclusionDates() {
+      var doc = Utils.getDoc(TEST_DOC_ID_);    
+      var docDate = getDateTimeFromDocTitle_(doc.getName());
+          
+      if (docDate === null) {
+        throw new Error('No date in doc title: [ yyyy.MM.dd ]: ' + doc.getName());
+      }
+   
+      var docYear = docDate.getYear();
+      
+      if (docYear !== 2019 && docYear !== 2020) {
+        throw new Error('"Exclude dates" only support 2019 and 2020 at the moment');
+      }
+              
+      var ss = SpreadsheetApp.openById(Config.get('PROMOTION_DEADLINES_CALENDAR_ID'));
+      var sheet = ss.getSheetByName('Calendar Exceptions');
+      var lastRow = sheet.getLastRow()
+      var holidays = sheet.getRange('A6:A' + lastRow).getValues();
+      var startDatesRange = (docYear === 2019) ? 'C6:C' + lastRow : 'F6:F' + lastRow;
+      var startDates = sheet.getRange(startDatesRange).getValues(); 
+      var endDatesRange = (docYear === 2019) ? 'D6:D' + lastRow : 'G6:G' + lastRow;    
+      var endDates = sheet.getRange(endDatesRange).getValues();
+      var rules = sheet.getRange('L6:L' + lastRow ).getValues();      
+      var newerStatuses = sheet.getRange('T6:T' + lastRow ).getValues();
+      var variousStatuses = sheet.getRange('V6:V' + lastRow ).getValues();
+      var sundayStatuses = sheet.getRange('X6:X' + lastRow ).getValues();
+      var hymnStatuses = sheet.getRange('Y6:Y' + lastRow ).getValues();      
+      var excludedDates = [];
+      
+      // Create an array of all the excluded dates (with duplicates) along with 
+      // the status of of that date for various event types
+      
+      holidays.forEach(function(holiday, rowIndex) {
+      
+        var startDate = startDates[rowIndex][0];
+        var endDate = endDates[rowIndex][0];        
+        var nextDate = startDate;
+        var nextRule = rules[rowIndex][0];
+
+        if (!getNextRule(startDate, endDate, nextRule)) {
+          Log_.fine(startDate + ' failed rule "' + nextRule + '"')
+          return;
+        }
+
+        do {
+                        
+          var nextStatus = {
+            date: nextDate,
+            status: {
+              newer: newerStatuses[rowIndex],
+              various: variousStatuses[rowIndex],
+              sunday: sundayStatuses[rowIndex],
+              hymn: hymnStatuses[rowIndex],
+            }
+          }         
+          
+          excludedDates.push(nextStatus);
+          nextDate = new Date(nextDate.getYear(), nextDate.getMonth(), nextDate.getDate() + 1);
+          
+        } while (nextDate < endDate); 
+        
+      });
+      
+      return getUniqueDates();
+      
+      // Private Functions
+      // -----------------
+
+      /**
+       * Process the rule for this holiday
+       */
+       
+      function getNextRule(startDate, endDate, rule) {
+      
+        if (rule === 'true') {
+          return true;
+        }
+
+        if (getDateInMs_(startDate) !== getDateInMs_(endDate)) {
+        
+          throw new Error(
+            'Start Date: ' + startDate + ' - ' + 
+            'End Date: ' + endDate + '. ' +          
+            'Only holidays with the same start and end date are supported.');
+        }
+      
+        var words = rule.split(' ');
+        var ruleDayOfTheWeek;
+        var nextDayofTheWeek = DAYS_OF_WEEK_[startDate.getDay()];
+        var result;
+        
+        if (rule.indexOf('start and end date is any day of the week except ') === 0) {
+        
+          ruleDayOfTheWeek = words[11].trim().toUpperCase();
+          result = (ruleDayOfTheWeek === nextDayofTheWeek) ? false : true;
+                  
+        } else if (rule.indexOf('start and end date is a ') === 0) {
+        
+          ruleDayOfTheWeek = words[6].trim().toUpperCase();
+          result = (ruleDayOfTheWeek === nextDayofTheWeek) ? true : false;
+                  
+        } else {
+        
+          throw new Error('Invalid rule: "' + rule + '"');
+        }
+        
+        Log_.finer('rule: "' + rule + '", date: ' + startDate + ', result: ' + result);
+        return result;        
+      }
+
+      /**
+       * Remove duplicates and supercede any other status with "suspended"
+       */
+
+      function getUniqueDates() {
+      
+        var unique = {};
+        
+        excludedDates.forEach(function(nextStatus) {
+        
+          var nextDate = nextStatus.date
+          
+          if (unique.hasOwnProperty(nextDate)) {
+  
+            var oldNewer = unique[nextDate].newer
+            var oldVarious = unique[nextDate].various
+            var oldSunday = unique[nextDate].sunday
+            var oldHymn = unique[nextDate].hymn
+          
+            unique[nextDate] = {
+              newer:   (oldNewer === 'suspended')   ? oldNewer   : nextStatus.status.newer,
+              various: (oldVarious === 'suspended') ? oldVarious : nextStatus.status.various,
+              sunday:  (oldSunday === 'suspended')  ? oldSunday  : nextStatus.status.sunday,
+              hymn:    (oldHymn === 'suspended')    ? oldHymn    : nextStatus.status.hymn,
+            }  
+            
+          } else {
+                    
+            unique[nextDate] = {
+              newer: nextStatus.status.newer,
+              various: nextStatus.status.various,
+              sunday: nextStatus.status.sunday,
+              hymn: nextStatus.status.hymn,
+            }                      
+          }
+        });
+        
+        Log_.fine('unique: %s', unique);
+        return unique;
+        
+      } // exportEvents_.excludeEvents.getExclusionDates.getUniqueDates()
+             
+    } // exportEvents_.excludeEvents.getExclusionDates()
+    
   } // exportEvents_.excludeEvents()
   
   /**
@@ -680,7 +735,7 @@ function exportEvents_(settings) {
     
     note = note.substring(3); // Jump past the '>>'
     
-    var dates = {};
+    var dates = null;
     var conditions = null;
     
     // Look for "Starts [month] [day]", e.g. "Start January 4".
@@ -756,19 +811,18 @@ function exportEvents_(settings) {
           'finish': updatedFinishDate
         };
         
-      } else {
-        
-        // Look for "[number][ST|ND|RD|TH] [day of the week] OF THE MONTH", e.g. "1ST SUNDAY OF THE MONTH". 
-        finds = note.match(/^(([1-4]{1})(ST|ND|RD|TH))\s(SUNDAY|MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY)\sOF\sTHE\sMONTH/);
-        
-        if (finds !== null && finds.length === 5) {
-          conditions = {
-            'queue': Number(finds[2]),
-            'day': finds[4]
-          };
-        }
-      } 
+      }
     }
+
+    // Look for "[number][ST|ND|RD|TH] [day of the week] OF THE MONTH", e.g. "1ST SUNDAY OF THE MONTH". 
+    finds = note.match(/^(([1-4]{1})(ST|ND|RD|TH))\s(SUNDAY|MONDAY|TUESDAY|WEDNESDAY|THURSDAY|FRIDAY|SATURDAY)\sOF\sTHE\sMONTH/);
+    
+    if (finds !== null && finds.length === 5) {
+      conditions = {
+        'queue': Number(finds[2]),
+        'day': finds[4]
+      };
+    } 
     
     Log_.fine('dates: %s', dates);
     Log_.fine('conditions: %s', conditions);

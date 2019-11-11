@@ -111,3 +111,7 @@ function getDateOnThisDay_(originalDate, dayOfTheWeek, forwards) {
   return nextDate;
   
 } // getDateOnThisDay_()
+
+function getDateInMs_(date) {
+  return new Date(date.getYear(), date.getMonth(), date.getDate()).getTime()
+}

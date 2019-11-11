@@ -55,12 +55,23 @@ function deleteEvents_(calendarNames) {
       var event = events[0];
       var name = event.getTitle();
     
-      if (event.isRecurringEvent()) {              
-        event.getEventSeries().deleteEventSeries();
-        Log_.info('Deleted event series"' + name + '" (' + event.getStartTime() + ')');  
+      if (event.isRecurringEvent()) {  
+      
+        if (TEST_DELETE_EVENTS_) {
+          event.getEventSeries().deleteEventSeries();
+          Log_.info('Deleted event series"' + name + '" (' + event.getStartTime() + ')');  
+        } else {
+          Log_.warning('Event delete disabled')
+        }
+        
       } else {
-        event.deleteEvent();
-        Log_.info('Deleted event "' + name + '" (' + event.getStartTime() + ')');
+      
+        if (TEST_DELETE_EVENTS_) {      
+          event.deleteEvent();
+          Log_.info('Deleted event "' + name + '" (' + event.getStartTime() + ')');
+         } else {
+          Log_.warning('Event delete disabled')
+        }         
       }        
     
       events = calendars[0].getEvents(start, end);  

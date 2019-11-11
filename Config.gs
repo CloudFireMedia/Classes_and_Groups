@@ -19,33 +19,33 @@
 var SCRIPT_NAME = 'ClassesAndGroups';
 var SCRIPT_VERSION = 'v1.6.dev_ajr';
 
-var PRODUCTION_VERSION_ = false
+var PRODUCTION_VERSION_ = false;
 
 // Log Library
 // -----------
 
-var DEBUG_LOG_LEVEL_ = PRODUCTION_VERSION_ ? BBLog.Level.INFO : BBLog.Level.FINER
-var DEBUG_LOG_DISPLAY_FUNCTION_NAMES_ = PRODUCTION_VERSION_ ? BBLog.DisplayFunctionNames.NO : BBLog.DisplayFunctionNames.YES
+var DEBUG_LOG_LEVEL_ = PRODUCTION_VERSION_ ? BBLog.Level.INFO : BBLog.Level.FINER;
+var DEBUG_LOG_DISPLAY_FUNCTION_NAMES_ = PRODUCTION_VERSION_ ? BBLog.DisplayFunctionNames.NO : BBLog.DisplayFunctionNames.YES;
 
 // Assert library
 // --------------
 
-var SEND_ERROR_EMAIL_ = PRODUCTION_VERSION_ ? true : false
-var HANDLE_ERROR_ = Assert.HandleError.THROW
-var ADMIN_EMAIL_ADDRESS_ = ''
+var SEND_ERROR_EMAIL_ = PRODUCTION_VERSION_ ? true : false;
+var HANDLE_ERROR_ = Assert.HandleError.THROW;
+var ADMIN_EMAIL_ADDRESS_ = '';
 
 // Tests
 // -----
 
-var PRODUCTION_VERSION = false
-
-var TEST_DOC_ID_ = '1EGihPHopDF9qedSz_AD2TpbcR92RpcGOp94r3Y2eGTw'; 
-
-var TEST_USE_UI_URL_ = true
+var TEST_DOC_ID_ = '1i2KMHWAYQeTHSwKEpKvFN97WlMTJkdyoCrvXxYqySsc'; 
 var TEST_SIGNAGE_SHEET_URL_ = 'https://docs.google.com/spreadsheets/d/1qVZDPBynzOzSgWJj_LW1vrp98kHnEweA0Cp2ICMAZbk/edit#gid=0';
 
-if (PRODUCTION_VERSION) {
-  if (!TEST_USE_UI_URL_) {
+var TEST_USE_UI_URL_    = true
+var TEST_CREATE_EVENTS_ = false
+var TEST_DELETE_EVENTS_ = false
+
+if (PRODUCTION_VERSION_) {
+  if (!TEST_USE_UI_URL_ || !TEST_CREATE_EVENTS_ || !TEST_DELETE_EVENTS_) {
     throw new Error('Test flag set in production version');
   }
 }

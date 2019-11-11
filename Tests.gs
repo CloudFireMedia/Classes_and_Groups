@@ -1,8 +1,14 @@
+function test_init() {
+  Log_ = BBLog.getLog({
+    level:                BBLog.Level.FINE, 
+    displayFunctionNames: BBLog.DisplayFunctionNames.NO,
+    sheetId:              Config.get('CLASSES_AND_GROUPS_LOG_ID'),
+  })
+}
 
 function test_misc() {
-  var a = new Date(2019,11,1)
-  var b = new Date(2019,11,2)
-  if (a > b) {throw 'STOP'}
+  var a = "a."  
+  var b = Utils.toSentenceCase(a)
   return
 }
 
@@ -12,8 +18,10 @@ function test_getDateOnThisDay() {
 }
 
 function test_exportEvents() {
+  test_init()
   var settings = {
-    populate_days:           ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"], 
+//    populate_days:           ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"], 
+    populate_days:           ["sunday", "monday", "tuesday", "wednesday"], 
     new_events_calendar:     "andrew@cloudfire.media", 
     regular_events_calendar: "andrew@cloudfire.media"
   }

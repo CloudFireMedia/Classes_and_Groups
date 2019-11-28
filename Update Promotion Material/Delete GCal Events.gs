@@ -19,6 +19,10 @@ function showDeletePopup_() {
   
 } // showDeletePopup_()
 
+/**
+ * Delete events
+ */
+
 function deleteEvents_(calendarNames) {
 
   Log_.fine(JSON.stringify(calendarNames));
@@ -49,6 +53,11 @@ function deleteEvents_(calendarNames) {
 
     var events = calendars[0].getEvents(start, end);
     var loopCount = 0;
+    
+    if (!TEST_DELETE_EVENTS_) {
+      Log_.warning('Event delete disabled')
+      return
+    }
 
     while (events.length > 0) {
     
@@ -57,21 +66,13 @@ function deleteEvents_(calendarNames) {
     
       if (event.isRecurringEvent()) {  
       
-        if (TEST_DELETE_EVENTS_) {
-          event.getEventSeries().deleteEventSeries();
-          Log_.info('Deleted event series"' + name + '" (' + event.getStartTime() + ')');  
-        } else {
-          Log_.warning('Event delete disabled')
-        }
+        event.getEventSeries().deleteEventSeries();
+        Log_.info('Deleted event series"' + name + '" (' + event.getStartTime() + ')');  
         
       } else {
       
-        if (TEST_DELETE_EVENTS_) {      
-          event.deleteEvent();
-          Log_.info('Deleted event "' + name + '" (' + event.getStartTime() + ')');
-         } else {
-          Log_.warning('Event delete disabled')
-        }         
+        event.deleteEvent();
+        Log_.info('Deleted event "' + name + '" (' + event.getStartTime() + ')');
       }        
     
       events = calendars[0].getEvents(start, end);  

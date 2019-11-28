@@ -41,8 +41,8 @@ var TEST_DOC_ID_ = '1i2KMHWAYQeTHSwKEpKvFN97WlMTJkdyoCrvXxYqySsc';
 var TEST_SIGNAGE_SHEET_URL_ = 'https://docs.google.com/spreadsheets/d/1qVZDPBynzOzSgWJj_LW1vrp98kHnEweA0Cp2ICMAZbk/edit#gid=0';
 
 var TEST_USE_UI_URL_    = true
-var TEST_CREATE_EVENTS_ = false
-var TEST_DELETE_EVENTS_ = false
+var TEST_CREATE_EVENTS_ = true
+var TEST_DELETE_EVENTS_ = true
 
 if (PRODUCTION_VERSION_) {
   if (!TEST_USE_UI_URL_ || !TEST_CREATE_EVENTS_ || !TEST_DELETE_EVENTS_) {
@@ -52,6 +52,20 @@ if (PRODUCTION_VERSION_) {
 
 // Constants/Enums
 // ===============
+
+var EVENT_TYPES = {
+  NEWER: {
+    KEY: 'newer', 
+    TEXT: 'NEW!'}, 
+  SUNDAY: {
+    KEY: 'sunday', 
+    TEXT: 'Adult Sunday School Classes'},
+  HYMN: {
+    KEY: 'hymn', 
+    TEXT: 'Midweek Hymns + Teaching'},
+  VARIOUS: {
+    KEY: 'various'}, 
+}
 
 var USER_GUIDE_LINK_ = 'https://docs.google.com/document/d/1ZXifx5WSlNoxPku7Cn8zZALKIDVjFk1NxwvvFDbth8s/edit#heading=h.9qlsam9808zt';
 

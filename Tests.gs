@@ -6,10 +6,10 @@ function test_init() {
   })
 }
 
-function test_misc() {
-  var a = "a."  
-  var b = Utils.toSentenceCase(a)
-  return
+function getDayDiff(today, timestamp) {
+  var DAYS_IN_A_MS = 1000 * 60 * 60 * 24
+  var dayDiff = Math.floor((timestamp - today) / DAYS_IN_A_MS)
+  return dayDiff
 }
 
 function test_getDateOnThisDay() {
@@ -21,7 +21,7 @@ function test_exportEvents() {
   test_init()
   var settings = {
 //    populate_days:           ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"], 
-    populate_days:           ["sunday", "monday", "tuesday", "wednesday"], 
+    populate_days:           ["sunday"], 
     new_events_calendar:     "andrew@cloudfire.media", 
     regular_events_calendar: "andrew@cloudfire.media"
   }

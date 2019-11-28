@@ -542,18 +542,65 @@ function exportEvents_(settings) {
   
     var exclusionDates = getExclusionDates();   
     
-    exclusionDates.forEach(function(date) {
+    for (var dateKey in exclusionDates) {
+        
+      if (!exclusionDates.hasOwnProperty(dateKey)) {
+        continue;
+      }
+    
+      var typeStatuses = exclusionDates[dateKey];
+    
       calendars.forEach(function(calendar) {
-		calendar.getEventsForDay(date).forEach(function(event) {        
-          if (TEST_DELETE_EVENTS_) {
-            event.deleteEvent();
-            Log_.info('Deleted event"' + name + '" (' + day + ')');  
-          } else {
-            Log_.warning('Event delete disabled: ' + event.getTitle());
+      
+		calendar.getEventsForDay(new Date(dateKey)).forEach(function(event) {
+        
+          var status = typeStatuses[getEventType()];
+          Log_.fine('status: ' + status);
+                  
+          if (status === 'suspended') {    
+            
+            if (TEST_DELETE_EVENTS_) {
+              
+              event.deleteEvent();
+              Log_.info('Deleted event"' + event.getTitle() + '" (' + dateKey + ')');  
+              
+            } else {
+            
+              Log_.warning('Event delete disabled: ' + event.getTitle());
+            }  
           }
-        });
-      });
-    });     
+          
+          return;
+          
+          // Private Functions
+          // -----------------
+          
+          function getEventType() {
+          
+            var title = event.getTitle();
+            Log_.fine('Title: ' + title);
+
+            var type = EVENT_TYPES.VARIOUS.KEY;
+            
+            if (title.indexOf(EVENT_TYPES.NEWER.TEXT) !== -1) {           
+              type = EVENT_TYPES.NEWER.KEY;              
+            } else if (title.indexOf(EVENT_TYPES.SUNDAY.TEXT) !== -1) {            
+              type = EVENT_TYPES.SUNDAY.KEY;            
+            } else if (title.indexOf(EVENT_TYPES.HYMN.TEXT) !== -1) {            
+              type = EVENT_TYPES.HYMN.KEY;
+            } 
+            
+            Log_.fine('type: ' + type);
+            return type;
+            
+          } // exportEvents_.excludeEvents.getEventType()         
+          
+        }); // for each event
+        
+      }); // for each calendar
+      
+    } // For each exclusion date
+    
     return;
     
     // Private Functions
@@ -589,7 +636,7 @@ function exportEvents_(settings) {
       var excludedDates = [];
       
       // Create an array of all the excluded dates (with duplicates) along with 
-      // the status of of that date for various event types
+      // the status of that date for various event types
       
       holidays.forEach(function(holiday, rowIndex) {
       
@@ -608,10 +655,10 @@ function exportEvents_(settings) {
           var nextStatus = {
             date: nextDate,
             status: {
-              newer: newerStatuses[rowIndex],
-              various: variousStatuses[rowIndex],
-              sunday: sundayStatuses[rowIndex],
-              hymn: hymnStatuses[rowIndex],
+              newer: newerStatuses[rowIndex][0],
+              various: variousStatuses[rowIndex][0],
+              sunday: sundayStatuses[rowIndex][0],
+              hymn: hymnStatuses[rowIndex][0],
             }
           }         
           

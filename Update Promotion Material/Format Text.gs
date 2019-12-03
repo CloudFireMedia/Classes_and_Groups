@@ -5,7 +5,7 @@ function formatDoc_() {
   var paragraphs = body.getParagraphs();
   
   paragraphs.forEach(function(paragraph, paragraphIndex) {
-    var text = paragraph.getText();
+    var text = paragraph.getText().trim();
     var wordArray = text.split(' ');
     var firstWord = wordArray[0].toUpperCase();    
     var firstTwoWords = (wordArray[0] + ' ' + wordArray[1]).toUpperCase();
@@ -14,28 +14,22 @@ function formatDoc_() {
     var timeRegex = new RegExp(/([0-9]((\ ){0,1})((AM)|(PM)|(am)|(pm)))|([1-9]:[0-5][0-9]((\ ){0,1})((AM)|(PM)|(am)|(pm)))|(1[0-2]:[0-5][0-9]((\ ){0,1})((AM)|(PM)|(am)|(pm)))/);
     var isTimeString = timeRegex.test(firstWord);
     
-    var BOLD = true;
-    var NOT_BOLD = false;
-    
-    var ITALIC = true;
-    var NOT_ITALIC = false;
-
     if ((justASingleWord && isFirstWordDayOfWeek) || (firstTwoWords === 'OTHER EVENTS')) {
 
       // Day of week or "Other Events" title
       paragraph.editAsText().setText(text.toUpperCase());
-      setStyle(BOLD, 30, NOT_ITALIC, 'Lato', 'HEADING1');
-           
+      setStyle_(paragraph, 'HEADING1');
+
     } else if (isTimeString) {
 
-      setStyle(BOLD, 10, ITALIC, 'Lato', 'HEADING2');
+      setStyle_(paragraph, 'HEADING2');
 
     } else {
     
-      if (text.indexOf('|') !== -1) {
+      if (found_('|', text)) {
       
-        // Event title
-        setStyle(BOLD, 10, NOT_ITALIC, 'Lato', 'HEADING3');        
+        // Event title               
+        setStyle_(paragraph, 'HEADING3');
         var toTitleCase = Utils.toTitleCase(text);
         paragraph.editAsText().setText(toTitleCase);
       
@@ -43,7 +37,7 @@ function formatDoc_() {
       
         var nextIndex = paragraphIndex + 1;
 
-        if ((firstWord.indexOf('>>') === -1) && (nextIndex < paragraphs.length)) {
+        if (!found_('>>', firstWord) && (nextIndex < paragraphs.length)) {
         
           // This paragraph does not begin with '>>' and there is one after that
           
@@ -51,19 +45,17 @@ function formatDoc_() {
           var nextParaWords = nextParaText.split(' ');
           var nextParaFirstWord = nextParaWords[0];
           
-          if (nextParaFirstWord.indexOf('>>') === -1) {
+          if (!found_('>>', nextParaFirstWord)) {
           
             // Neither this or the next paragraph start with '>>', 
             // so event description where event details DO NOT follow in the next line
+            setStyle_(paragraph, 'HEADING4');
 
-            setStyle(NOT_BOLD, 9.5, NOT_ITALIC, 'Lato', 'HEADING4');
-            
           } else {
 
             // This paragraph does not start with '>>', but the next one does  
             // so event description where event details DO  follow in the next line
-
-            setStyle(NOT_BOLD, 9.5, NOT_ITALIC, 'Lato', 'HEADING5');
+            setStyle_(paragraph, 'HEADING5');
           }
           
           var toSentenceCase = Utils.toSentenceCase(text);
@@ -71,25 +63,13 @@ function formatDoc_() {
                     
         } else { // Starts with '>>'
 
-          setStyle(NOT_BOLD, 9.5, ITALIC, 'Lato', 'HEADING6');
+          setStyle_(paragraph, 'HEADING6');
         }
       }
     }
     
     // Private Functions
     // -----------------
-  
-    function setStyle(bold, fontSize, italic, fontStyle, heading) {
-    
-      var style = {};
-      style[DocumentApp.Attribute.BOLD] = bold;
-      style[DocumentApp.Attribute.FONT_SIZE] = fontSize;
-      style[DocumentApp.Attribute.ITALIC] = italic;
-      style[DocumentApp.Attribute.FONT_FAMILY] = fontStyle;
-        
-      paragraph.setAttributes(style);
-      paragraph.setHeading(DocumentApp.ParagraphHeading[heading]);
-    }
   
   }); // for each paragraph
   

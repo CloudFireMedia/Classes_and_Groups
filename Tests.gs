@@ -1,3 +1,4 @@
+
 function test_init() {
   Log_ = BBLog.getLog({
     level:                BBLog.Level.FINE, 
@@ -6,10 +7,15 @@ function test_init() {
   })
 }
 
-function getDayDiff(today, timestamp) {
-  var DAYS_IN_A_MS = 1000 * 60 * 60 * 24
-  var dayDiff = Math.floor((timestamp - today) / DAYS_IN_A_MS)
-  return dayDiff
+// DocumentApp.getActiveDocument().getBody().getParagraphs()[0].getHeading()
+
+function test_misc() {
+  test_init();
+  var paragraphs = Utils.getDoc(TEST_DOC_ID_).getBody().getParagraphs();
+  paragraphs.forEach(function(p) {
+    Logger.log(p.getAttributes());
+  })
+//  setStyle_(paragraph, 'HEADING3');
 }
 
 function test_getDateOnThisDay() {

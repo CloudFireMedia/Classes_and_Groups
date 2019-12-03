@@ -37,7 +37,7 @@ var ADMIN_EMAIL_ADDRESS_ = '';
 // Tests
 // -----
 
-var TEST_DOC_ID_ = '1i2KMHWAYQeTHSwKEpKvFN97WlMTJkdyoCrvXxYqySsc'; 
+var TEST_DOC_ID_ = '1kQhFH08icw5K2Ew7bzVEyFwydX9ECLUvb-tKm7EJSto'; 
 var TEST_SIGNAGE_SHEET_URL_ = 'https://docs.google.com/spreadsheets/d/1qVZDPBynzOzSgWJj_LW1vrp98kHnEweA0Cp2ICMAZbk/edit#gid=0';
 
 var TEST_USE_UI_URL_    = true
@@ -52,6 +52,43 @@ if (PRODUCTION_VERSION_) {
 
 // Constants/Enums
 // ===============
+
+var DEFAULT_FONT_FAMILY_ = 'Lato';
+var DEFAULT_FONT_COLOR_ = '#000000';
+
+var ATTRIBUTES_ = DocumentApp.Attribute
+
+var HEADINGS_ = {
+  HEADING1: {
+//    BOLD: true, 
+//    FONT_SIZE: 30, 
+  },
+  HEADING2: {
+//    BOLD: true, 
+//    ITALIC: true,     
+//    FONT_SIZE: 10, 
+  },
+  HEADING3: {
+//    BOLD: true,
+//    ITALIC: false,     
+//    FONT_SIZE: 10,
+  },
+  HEADING4: {
+//    BOLD: false,
+//    ITALIC: false, 
+//    FONT_SIZE: 9.5, 
+  }, 
+  HEADING5: {
+//    BOLD: false,
+//    ITALIC: false,   
+//    FONT_SIZE: 9.5,
+  },
+  HEADING6: {
+//    BOLD: false,
+//    ITALIC: true,   
+//    FONT_SIZE: 9.5, 
+  }
+}
 
 var EVENT_TYPES = {
   NEWER: {

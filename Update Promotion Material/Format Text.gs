@@ -18,18 +18,18 @@ function formatDoc_() {
 
       // Day of week or "Other Events" title
       paragraph.editAsText().setText(text.toUpperCase());
-      setStyle_(paragraph, 'HEADING1');
+      setTextStyle_(paragraph, 'HEADING1');
 
     } else if (isTimeString) {
 
-      setStyle_(paragraph, 'HEADING2');
+      setTextStyle_(paragraph, 'HEADING2');
 
     } else {
     
       if (found_('|', text)) {
       
         // Event title               
-        setStyle_(paragraph, 'HEADING3');
+        setTextStyle_(paragraph, 'HEADING3');
         var toTitleCase = Utils.toTitleCase(text);
         paragraph.editAsText().setText(toTitleCase);
       
@@ -49,13 +49,13 @@ function formatDoc_() {
           
             // Neither this or the next paragraph start with '>>', 
             // so event description where event details DO NOT follow in the next line
-            setStyle_(paragraph, 'HEADING4');
+            setTextStyle_(paragraph, 'HEADING4');
 
           } else {
 
             // This paragraph does not start with '>>', but the next one does  
             // so event description where event details DO  follow in the next line
-            setStyle_(paragraph, 'HEADING5');
+            setTextStyle_(paragraph, 'HEADING5');
           }
           
           var toSentenceCase = Utils.toSentenceCase(text);
@@ -63,14 +63,11 @@ function formatDoc_() {
                     
         } else { // Starts with '>>'
 
-          setStyle_(paragraph, 'HEADING6');
+          setTextStyle_(paragraph, 'HEADING6');
         }
       }
     }
     
-    // Private Functions
-    // -----------------
-  
   }); // for each paragraph
   
   removeBlankParagraph();

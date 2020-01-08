@@ -121,36 +121,10 @@ function found_(stringToFind, stringToSearch) {
 }
 
 /**
- * Set the text style
- *
  * @param {Paragraph} paragraph
  * @param {DocumentApp.ParagraphHeading} heading
  */ 
 
-function setStyle_(paragraph, heading) {  
-
-  paragraph.setHeading(DocumentApp.ParagraphHeading[heading]); 
-  
-  var attributes = {};
-  var settings = HEADINGS_[heading];
-  
-  for (var key in settings) {
-  
-    if (!settings.hasOwnProperty(key)) {
-      return;
-    }
-    
-    attributes[DocumentApp.Attribute[key]] = settings[key];
-  }
-      
-  attributes[DocumentApp.Attribute.FOREGROUND_COLOR] = DEFAULT_FONT_COLOR_;
-  attributes[DocumentApp.Attribute.FONT_FAMILY] = DEFAULT_FONT_FAMILY_;
-    
-  paragraph.setAttributes(attributes);
-  Log_.fine('set attributes: %s, text: "%s"', attributes, paragraph.getText()); 
-
-// DocumentApp.getActiveDocument().getBody().getParagraphs()[0].getAttributes()
-
-  Logger.log(paragraph.getAttributes());
-
+function setTextStyle_(paragraph, heading) {  
+  paragraph.setHeading(DocumentApp.ParagraphHeading[heading]);   
 }

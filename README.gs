@@ -1,3 +1,9 @@
+
+// v1.7
+// ----
+//
+// * Overhauled formatting of GDoc
+
 // v1.6
 // ----
 //

@@ -17,9 +17,9 @@
 // All the constants and configuration settings
 
 var SCRIPT_NAME = 'ClassesAndGroups';
-var SCRIPT_VERSION = 'v1.6.dev_ajr';
+var SCRIPT_VERSION = 'v1.7';
 
-var PRODUCTION_VERSION_ = false;
+var PRODUCTION_VERSION_ = true;
 
 // Log Library
 // -----------
@@ -52,43 +52,6 @@ if (PRODUCTION_VERSION_) {
 
 // Constants/Enums
 // ===============
-
-var DEFAULT_FONT_FAMILY_ = 'Lato';
-var DEFAULT_FONT_COLOR_ = '#000000';
-
-var ATTRIBUTES_ = DocumentApp.Attribute
-
-var HEADINGS_ = {
-  HEADING1: {
-//    BOLD: true, 
-//    FONT_SIZE: 30, 
-  },
-  HEADING2: {
-//    BOLD: true, 
-//    ITALIC: true,     
-//    FONT_SIZE: 10, 
-  },
-  HEADING3: {
-//    BOLD: true,
-//    ITALIC: false,     
-//    FONT_SIZE: 10,
-  },
-  HEADING4: {
-//    BOLD: false,
-//    ITALIC: false, 
-//    FONT_SIZE: 9.5, 
-  }, 
-  HEADING5: {
-//    BOLD: false,
-//    ITALIC: false,   
-//    FONT_SIZE: 9.5,
-  },
-  HEADING6: {
-//    BOLD: false,
-//    ITALIC: true,   
-//    FONT_SIZE: 9.5, 
-  }
-}
 
 var EVENT_TYPES = {
   NEWER: {
@@ -151,8 +114,8 @@ var NUMBER_OF_MS_IN_A_DAY_ = 1000 * 60 * 60 * 24;
  */
 /* 
 function functionTemplate() {
-  Log_.functionEntryPoint()
   
   
+
 } // functionTemplate() 
 */

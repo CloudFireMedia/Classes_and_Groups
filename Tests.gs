@@ -1,3 +1,4 @@
+/*
 
 function test_init() {
   Log_ = BBLog.getLog({
@@ -112,3 +113,5 @@ function test_getSeason() {
     Logger.log(getSeason(i))
   }
 }
+
+*/

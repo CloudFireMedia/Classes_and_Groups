@@ -2,13 +2,21 @@
   "timeZone": "America/Chicago",
   "dependencies": {
     "libraries": [{
-      "userSymbol": "Utils",
-      "libraryId": "1VFIfuvYy0l7pL7Z6Zm7ejJwfSyaOxUUYIEHrGy6XcqH6p_4i8-GA0Qpx",
-      "version": "4"
+      "userSymbol": "BBLog",
+      "libraryId": "1kzzYZhgODZluRmjsjh7t3O-ftmFAF9h1jaRHU0rOdf9irF0VUiJW33Kt",
+      "version": "13"
     }, {
       "userSymbol": "Config",
       "libraryId": "1oO44r3nax5MO1XsI1hlr4ZM0OtPVCQKgDYUe08ej_SkIKn9uvzZ6WKQl",
       "version": "10"
+    }, {
+      "userSymbol": "Assert",
+      "libraryId": "1R-rxUHuQU0ez95FlZz9fxqifbYFszHnukqzv_3Uk5zM3eG4eRBrh_E1M",
+      "version": "16"
+    }, {
+      "userSymbol": "Utils",
+      "libraryId": "1VFIfuvYy0l7pL7Z6Zm7ejJwfSyaOxUUYIEHrGy6XcqH6p_4i8-GA0Qpx",
+      "version": "6"
     }]
   },
   "webapp": {

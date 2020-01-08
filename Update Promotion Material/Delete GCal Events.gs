@@ -19,12 +19,15 @@ function showDeletePopup_() {
   
 } // showDeletePopup_()
 
+/**
+ * Delete events
+ */
+
 function deleteEvents_(calendarNames) {
 
-  var logSheet = logInit_();
-  log_(logSheet, JSON.stringify(calendarNames));
+  Log_.fine(JSON.stringify(calendarNames));
 
-  var doc = Utils.getDoc();
+  var doc = Utils.getDoc(TEST_DOC_ID_);
   var title = doc.getName();
   
   var start = getDateTimeFromDocTitle_(title);
@@ -50,18 +53,26 @@ function deleteEvents_(calendarNames) {
 
     var events = calendars[0].getEvents(start, end);
     var loopCount = 0;
+    
+    if (!TEST_DELETE_EVENTS_) {
+      Log_.warning('Event delete disabled')
+      return
+    }
 
     while (events.length > 0) {
     
       var event = events[0];
       var name = event.getTitle();
     
-      if (event.isRecurringEvent()) {              
+      if (event.isRecurringEvent()) {  
+      
         event.getEventSeries().deleteEventSeries();
-        log_(logSheet, 'Deleted event series"' + name + '" (' + event.getStartTime() + ')');  
+        Log_.info('Deleted event series"' + name + '" (' + event.getStartTime() + ')');  
+        
       } else {
+      
         event.deleteEvent();
-        log_(logSheet, 'Deleted event "' + name + '" (' + event.getStartTime() + ')');
+        Log_.info('Deleted event "' + name + '" (' + event.getStartTime() + ')');
       }        
     
       events = calendars[0].getEvents(start, end);  
@@ -70,6 +81,6 @@ function deleteEvents_(calendarNames) {
     
   }); // for each calendar
   
-  log_(logSheet, 'Finished deleting calendar events');
+  Log_.info('Finished deleting calendar events');
      
 } // deleteEvents_()

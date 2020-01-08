@@ -147,12 +147,17 @@
 				<input id="saturday" name="populate_days[]" type="checkbox" value="saturday" checked="checked"/>
 			</div>
 		</fieldset>
+ 
+    <div id="error" style="color: red;"></div>
+    <div id="result"></div>
+    <br>
+ 
     <button id="export-btn">Export</button>
-        
+            
 	</form>
 	<div id="shade">
 		<div id="progressbar">
-			<div class="label">Export in progress...</div>
+			<div id="progressbar-label" class="label">Export in progress...</div>
 		</div>
 	</div>
 
@@ -200,13 +205,16 @@
 				e.preventDefault();
 			});
 
-			function onParseSuccess() {
-				google.script.host.close();
+			function onParseSuccess(message) {
+              console.log(message)
+                $('#shade').hide();                  
+                $('#result').text(message);               
 			}
 
 			function onParseFailure(e) {
-				$('#export-btn').button('option', 'disabled', false);
-                $('#shade').hide();
+                $('#shade').hide();      
+                $('#error').text(e.message); 
+				$('#export-btn').button('option', 'disabled', false);              
 			}
 		});
 	</script>

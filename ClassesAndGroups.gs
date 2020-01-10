@@ -63,7 +63,7 @@ function deleteEvents(calendarsNames) {eventHandler_(EVENT_HANDLERS_.deleteEvent
 function exportEvents(settings)       {return eventHandler_(EVENT_HANDLERS_.exportEvents, settings)}
 
 // Web App
-function doGet(event) {return eventHandler_(EVENT_HANDLERS_.doGet_(event))}
+function doGet(event) {doGet_(event)}
 
 // Private Functions
 // =================
@@ -110,17 +110,11 @@ function eventHandler_(config, args) {
     
   } catch (error) {
   
-    var handleError = Assert.HandleError.DISPLAY_FULL
-
-    if (!PRODUCTION_VERSION_) {
-      handleError = Assert.HandleError.THROW
-    }
-
     var assertConfig = {
       error:          error,
       userMessage:    config[1],
       log:            Log_,
-      handleError:    handleError, 
+      handleError:    Assert.HandleError.THROW, 
       sendErrorEmail: SEND_ERROR_EMAIL_, 
       emailAddress:   ADMIN_EMAIL_ADDRESS_,
       scriptName:     SCRIPT_NAME,

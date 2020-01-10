@@ -75,6 +75,11 @@ function exportEvents_(settings) {
   
   function parseEvents() {  
     var populateDays = settings.populate_days;
+    
+    if (populateDays === undefined) {
+      throw new Error('No days selected')
+    }
+    
     var doc = Utils.getDoc(TEST_DOC_ID_);
     var docDate = getDateTimeFromDocTitle_(doc.getName());
     
@@ -161,6 +166,8 @@ function exportEvents_(settings) {
         } // switch (heading)
         
       } // ! other event
+      
+      return;
       
       // Private Functions
       // -----------------

@@ -613,7 +613,12 @@ function exportEvents_(settings) {
     // Private Functions
     // -----------------
     
-    function getExclusionDates() {
+    function getExclusionDates() {  
+    
+      if (!USE_EXCLUSION_DATES_) {
+        return [];
+      }
+    
       var doc = Utils.getDoc(TEST_DOC_ID_);    
       var docDate = getDateTimeFromDocTitle_(doc.getName());
           
